@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 800px; overflow: hidden;
+    background: #17181b;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 90px;
+  }
+  .pitch { width: 420px; }
+  .kicker {
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #d6ae58; margin-bottom: 18px;
+  }
+  h1 { font-size: 44px; line-height: 1.15; color: #dfe1e5; font-weight: 650; margin-bottom: 18px; }
+  p { font-size: 19px; line-height: 1.5; color: #9da0a8; }
+  .frame {
+    width: 384px; border: 1px solid #393b40; border-radius: 14px;
+    overflow: hidden; background: #1e1f22; padding: 11px;
+  }
+  iframe { width: 360px; height: 640px; border: none; display: block; }
+</style>
+<script>
+  addEventListener('load', () => {
+    const f = document.querySelector('iframe');
+    const tick = setInterval(() => {
+      const tab = f.contentDocument && f.contentDocument.querySelector('[data-tab="stats"]');
+      if (tab) { tab.click(); clearInterval(tick); }
+    }, 100);
+  });
+</script>
+</head>
+<body>
+  <div class="pitch">
+    <div class="kicker">Review Rail</div>
+    <h1>Honest review stats</h1>
+    <p>Counted from real GitLab actions only — approvals, submitted reviews, merged work. No manual "count it" button.</p>
+  </div>
+  <div class="frame"><iframe src="../../src/popup/popup.html"></iframe></div>
+</body>
+</html>

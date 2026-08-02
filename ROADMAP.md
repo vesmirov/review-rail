@@ -1,0 +1,44 @@
+# Roadmap
+
+Review Rail is an ordered review queue, not a dashboard: it answers
+"what do I review next". Today that covers reviews waiting on you;
+tracking your own merge requests waiting on others is on the list below.
+
+## Working today
+
+- Flat ordered queue with manual drag, urgency label support, and an
+  always-highlighted "review this now" card
+- Waiting sections (Changes requested / Commented) with automatic return
+  to the queue when the author re-requests review
+- Honest review counting from real GitLab actions only, with stats and a
+  16-week activity grid
+- Hide/restore with state tracking
+- Pipeline status on cards — one icon: passed, failed, or running
+- Group-approval MRs — merge requests where you are an eligible approver
+  via a group rule are picked up and marked; silent on instances without
+  approval rules (beta)
+- GitLab: gitlab.com and self-hosted, read-only token (`read_api`)
+
+## Next
+
+Rough order. Subject to change.
+
+1. **Working-hours age** — card age and staleness counted within your
+   working hours, so Monday morning doesn't look like everything is on fire.
+2. **Notifications** — new MRs entering your queue; status changes on
+   your own MRs (approved, changes requested, commented, merged, failed
+   pipeline).
+3. **Your own MRs** — track their review status in the extension.
+4. **GitHub support** — same queue, same rules, pull requests.
+5. **Gamification** — streaks and milestones on top of the existing
+   honest stats.
+
+## Out of scope
+
+These are deliberate decisions, not missing features.
+
+- **Actions from the extension** (approve, merge, comment) — the
+  extension is read-only, permanently.
+- **Team dashboards and manager metrics** — the queue is personal.
+- **AI review** — plenty of other tools do this.
+- **Backend, accounts, telemetry** — everything stays in the browser.

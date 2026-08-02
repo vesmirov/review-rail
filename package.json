@@ -1,0 +1,13 @@
+{
+  "name": "review-rail",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Personal code review queue for GitLab, self-hosted or gitlab.com. Know what to review next. All data stays in your browser."
+}
