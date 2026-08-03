@@ -102,8 +102,15 @@ async function syncLabelColors(settings, queue) {
     'labelColorsAt',
   ]);
   const now = Date.now();
+  const hasUnknownLabel = (pid) =>
+    queue.some(
+      (i) => i.projectId === pid && (i.labels || []).some((l) => !(labelColors[pid] || {})[l])
+    );
   const stale = [...new Set(queue.map((i) => i.projectId))].filter(
-    (pid) => !labelColors[pid] || now - (labelColorsAt[pid] || 0) > LABEL_COLORS_TTL
+    (pid) =>
+      !labelColors[pid] ||
+      now - (labelColorsAt[pid] || 0) > LABEL_COLORS_TTL ||
+      hasUnknownLabel(pid)
   );
   await Promise.all(
     stale.map(async (pid) => {
@@ -280,6 +287,13 @@ export async function sync() {
       }
     };
 
+    const fetchApprovedByMe = (item) =>
+      tapi(settings, `/projects/${item.projectId}/merge_requests/${item.iid}/approvals`)
+        .then((a) =>
+          ((a && a.approved_by) || []).some((x) => x.user && x.user.id === settings.userId)
+        )
+        .catch(() => false);
+
     const outcomes = await pool(queue, POOL_LIMIT, async (item) => {
       try {
         const fromList = assignedByKey.get(item.key);
@@ -287,22 +301,24 @@ export async function sync() {
           fromList || (await tapi(settings, `/projects/${item.projectId}/merge_requests/${item.iid}`));
         refreshItemFromMr(item, mr, settings.asapLabel);
 
+        // Reviewer verdicts (request changes / approve) do not bump the MR's
+        // updated_at, so the reviewer state must be re-checked even when the
+        // delta-sync fast path skips everything else.
         const unchanged = fromList && item.updatedAt && fromList.updated_at === item.updatedAt;
         if (unchanged) {
           if (item.pipeline === 'running') await refreshPipeline(item, null);
+          const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;
+          const verdict = reviewerVerdict(rState);
+          if (verdict) return { type: 'review-sent', item, how: verdict, rState };
+          if (rState === 'approved' && (await fetchApprovedByMe(item))) {
+            return { type: 'approved', item };
+          }
           return { type: 'keep', item };
         }
 
         await refreshPipeline(item, mr);
 
-        const approvedByMe = await tapi(
-          settings,
-          `/projects/${item.projectId}/merge_requests/${item.iid}/approvals`
-        )
-          .then((a) =>
-            ((a && a.approved_by) || []).some((x) => x.user && x.user.id === settings.userId)
-          )
-          .catch(() => false);
+        const approvedByMe = await fetchApprovedByMe(item);
 
         if (!approvedByMe && mr.state === 'opened') {
           const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;

@@ -56,6 +56,17 @@ export function refreshItemFromMr(item, mr, asapLabel) {
   return item;
 }
 
+export function shortName(name) {
+  const parts = String(name || '').trim().split(/\s+/);
+  if (parts.length < 2) return parts[0] || '';
+  return parts[0] + ' ' + parts.slice(1).map((w) => w[0].toUpperCase() + '.').join(' ');
+}
+
+export function shortPath(path) {
+  const segments = String(path || '').split('/');
+  return segments[segments.length - 1];
+}
+
 export function labelTextColor(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
   if (!m) return '#ffffff';

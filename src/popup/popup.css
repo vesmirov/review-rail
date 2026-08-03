@@ -92,7 +92,7 @@ body {
 
 .icon { display: inline-flex; align-items: center; color: inherit; }
 
-@keyframes rq-spin { to { transform: rotate(360deg); } }
+@keyframes rq-spin { to { transform: rotate(-360deg); } }
 .spinning svg { animation: rq-spin 0.9s linear infinite; }
 
 .tabs { display: flex; gap: 4px; padding: 6px 14px 0; }

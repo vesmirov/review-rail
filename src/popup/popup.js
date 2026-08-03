@@ -1,4 +1,4 @@
-import { partitionQueue, labelTextColor, sortLabels } from '../lib/queue.js';
+import { partitionQueue, labelTextColor, sortLabels, shortName, shortPath } from '../lib/queue.js';
 import {
   computeStats,
   activityWeeks,
@@ -265,7 +265,7 @@ function appendItems(zone, items, state, nextKey) {
     title.title = item.title;
 
     const meta = buildMeta(item);
-    appendAge(meta, item.createdAt);
+    appendAge(meta, item.requestedAt || item.createdAt, item.createdAt);
     body.append(top, title, meta);
 
     const row = el('div', 'card-row');
@@ -278,28 +278,36 @@ function appendItems(zone, items, state, nextKey) {
     wireDrag(li, zone);
     zone.append(li);
   }
+  zone.addEventListener('dragover', (e) => {
+    if (zone.querySelector('.dragging')) e.preventDefault();
+  });
 }
 
 function buildMeta(item) {
   const meta = el('div', 'item-meta');
   const author = el('span', 'meta-author');
-  author.append(icon('user', 11), el('span', 'name', item.author));
+  author.append(icon('user', 11), el('span', 'name', shortName(item.author)));
   author.title = item.author;
-  const path = el('span', 'meta-text', `${item.projectPath}!${item.iid}`);
+  const path = el('span', 'meta-text', `${shortPath(item.projectPath)}!${item.iid}`);
   path.title = `${item.projectPath}!${item.iid}`;
   meta.append(author, path);
   return meta;
 }
 
-function appendAge(node, createdAt) {
-  if (!createdAt) return;
-  const age = el('span', 'item-age', ageText(createdAt));
-  age.title = `Opened ${new Date(createdAt).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })}`;
+function appendAge(node, ts, openedAt) {
+  if (!ts) return;
+  const fmt = (t) =>
+    new Date(t).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  const age = el('span', 'item-age', ageText(ts));
+  age.title =
+    openedAt && openedAt !== ts
+      ? `In review since ${fmt(ts)} · opened ${fmt(openedAt)}`
+      : `Opened ${fmt(ts)}`;
   node.append(age);
 }
 
@@ -334,8 +342,9 @@ function wireDrag(li, wrap) {
   });
   li.addEventListener('dragover', (e) => {
     const dragging = wrap.querySelector('.dragging');
-    if (!dragging || dragging === li) return;
+    if (!dragging) return;
     e.preventDefault();
+    if (dragging === li) return;
     const rect = li.getBoundingClientRect();
     const before = e.clientY < rect.top + rect.height / 2;
     wrap.insertBefore(dragging, before ? li : li.nextSibling);

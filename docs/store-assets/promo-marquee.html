@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    width: 1400px; height: 560px; overflow: hidden;
+    background: #1e1f22;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; align-items: center; gap: 110px;
+  }
+  .pitch { width: 470px; margin-left: 130px; }
+  .pitch svg { display: block; margin-bottom: 30px; }
+  h1 { font-size: 64px; color: #dfe1e5; font-weight: 650; margin-bottom: 20px; }
+  .bar { width: 72px; height: 5px; border-radius: 3px; background: #d6ae58; margin-bottom: 22px; }
+  p { font-size: 24px; line-height: 1.45; color: #9da0a8; }
+  .frame {
+    width: 384px; border: 1px solid #393b40; border-radius: 14px;
+    overflow: hidden; background: #17181b; padding: 11px;
+    margin-top: 170px;
+  }
+  iframe { width: 360px; height: 640px; border: none; display: block; }
+</style>
+</head>
+<body>
+  <div class="pitch">
+    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 32 32">
+  <polygon points="0.55,25.02 31.45,25.02 29.03,19.69 2.97,19.69" fill="#E8A44A" stroke="#E8A44A" stroke-width="1.07" stroke-linejoin="round"/>
+  <polygon points="4.71,15.89 27.30,15.89 25.58,12.08 6.43,12.08" fill="#C6C9CF" stroke="#C6C9CF" stroke-width="0.84" stroke-linejoin="round"/>
+  <polygon points="7.78,9.11 24.22,9.11 22.99,6.37 9.01,6.37" fill="#8A8E95" stroke="#8A8E95" stroke-width="0.68" stroke-linejoin="round"/>
+  <polygon points="2.15,27.53 5.50,27.53 12.12,4.47 10.90,4.47" fill="#EDEFF2" stroke="#EDEFF2" stroke-width="1.07" stroke-linejoin="round"/>
+  <polygon points="29.85,27.53 26.50,27.53 19.88,4.47 21.10,4.47" fill="#EDEFF2" stroke="#EDEFF2" stroke-width="1.07" stroke-linejoin="round"/>
+</svg>
+    <h1>Review Rail</h1>
+    <div class="bar"></div>
+    <p>Your GitLab reviews, in the order you should do them.</p>
+  </div>
+  <div class="frame"><iframe src="../../src/popup/popup.html"></iframe></div>
+</body>
+</html>

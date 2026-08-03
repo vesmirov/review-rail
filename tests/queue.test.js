@@ -20,6 +20,8 @@ import {
   pipelineIndicator,
   mergeReviewerAndApprover,
   applyQueueActions,
+  shortName,
+  shortPath,
 } from '../src/lib/queue.js';
 
 const item = (key, asap = false) => ({ key, asap });
@@ -438,4 +440,24 @@ test('refreshItemFromMr: не трогает viaGroup', () => {
   const item = { key: '1:2', title: 'old', labels: [], asap: false, viaGroup: true };
   refreshItemFromMr(item, { title: 'new', labels: [] }, 'asap');
   assert.equal(item.viaGroup, true);
+});
+
+test('shortName: второе и последующие слова сокращаются до инициалов', () => {
+  assert.equal(shortName('Александр Виноградов'), 'Александр В.');
+  assert.equal(shortName('Мария Петрова-Водкина'), 'Мария П.');
+  assert.equal(shortName('Анна Мария Крестовская'), 'Анна М. К.');
+});
+
+test('shortName: одно слово, пустота и лишние пробелы', () => {
+  assert.equal(shortName('vesmirov'), 'vesmirov');
+  assert.equal(shortName('  Иван   Петров  '), 'Иван П.');
+  assert.equal(shortName(''), '');
+  assert.equal(shortName(undefined), '');
+});
+
+test('shortPath: остаётся последний сегмент пути', () => {
+  assert.equal(shortPath('platform-core/billing/py.payment-orchestrator'), 'py.payment-orchestrator');
+  assert.equal(shortPath('acme/gateway'), 'gateway');
+  assert.equal(shortPath('gateway'), 'gateway');
+  assert.equal(shortPath(''), '');
 });
