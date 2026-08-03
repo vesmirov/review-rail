@@ -19,8 +19,10 @@ test('connectErrorMessage: человеческие сообщения вмес�
   assert.equal(connectErrorMessage(err(422), BASE), 'GitLab API 422: /user');
 });
 
-test('normalizeBaseUrl: обрезает слэши, отклоняет не-http', () => {
+test('normalizeBaseUrl: обрезает слэши, принимает только https', () => {
   assert.equal(normalizeBaseUrl('  https://git.corp/// '), 'https://git.corp');
+  assert.equal(normalizeBaseUrl('HTTPS://git.corp'), 'https://git.corp');
+  assert.equal(normalizeBaseUrl('http://git.corp'), null);
   assert.equal(normalizeBaseUrl('git.corp'), null);
   assert.equal(normalizeBaseUrl(''), null);
 });

@@ -21,7 +21,7 @@ function setTokenMode(saved) {
 
 function tokenPageUrl(rawUrl) {
   const clean = String(rawUrl || '').trim().replace(/\/+$/, '');
-  if (!/^https?:\/\//i.test(clean)) return null;
+  if (!/^https:\/\//i.test(clean)) return null;
   try {
     const u = new URL(clean);
     const base = u.origin + u.pathname.replace(/\/+$/, '');
@@ -42,10 +42,6 @@ function updateTokenLink() {
   } else {
     link.classList.add('hidden');
     hint.classList.remove('hidden');
-  }
-  const warn = $('http-warn');
-  if (warn) {
-    warn.classList.toggle('hidden', !/^http:\/\//i.test($('base-url').value.trim()));
   }
 }
 
@@ -108,7 +104,11 @@ $('save').addEventListener('click', async () => {
   const token = tokenEntryVisible ? $('token').value.trim() : '';
   const asapLabel = $('asap-label').value.trim() || 'asap';
 
-  if (!/^https?:\/\//i.test(baseUrl)) {
+  if (/^http:\/\//i.test(baseUrl)) {
+    setStatus('http:// is not supported — the token would be sent unencrypted. Use https://', 'err');
+    return;
+  }
+  if (!/^https:\/\//i.test(baseUrl)) {
     setStatus('Enter a URL like https://gitlab.example.com', 'err');
     return;
   }

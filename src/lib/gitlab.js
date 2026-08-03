@@ -77,7 +77,7 @@ export function connectErrorMessage(err, baseUrl) {
 
 export function normalizeBaseUrl(raw) {
   const clean = String(raw || '').trim().replace(/\/+$/, '');
-  if (!/^https?:\/\//i.test(clean)) return null;
+  if (!/^https:\/\//i.test(clean)) return null;
   try {
     const u = new URL(clean);
     const path = u.pathname.replace(/\/+$/, '');

@@ -30,9 +30,8 @@ queue for GitLab.
 
 ## Transport
 
-The token is sent only over the connection you configure. If you enter an
-`http://` URL (some intranet instances), the token travels unencrypted over
-that network — the settings page warns about this.
+The token is sent only over HTTPS to the GitLab host you configure. Plain
+`http://` URLs are not accepted.
 
 ## Data removal
 

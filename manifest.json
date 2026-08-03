@@ -8,8 +8,7 @@
     "alarms"
   ],
   "optional_host_permissions": [
-    "https://*/*",
-    "http://*/*"
+    "https://*/*"
   ],
   "background": {
     "service_worker": "src/background.js",
