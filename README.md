@@ -1,5 +1,15 @@
 # Review Rail
 
+[![tests](https://github.com/vesmirov/review-rail/actions/workflows/tests.yml/badge.svg)](https://github.com/vesmirov/review-rail/actions/workflows/tests.yml)
+[![chrome web store](https://img.shields.io/chrome-web-store/v/fbieahnpodbhpdbplbbjoldjfkhccllp)](https://chromewebstore.google.com/detail/fbieahnpodbhpdbplbbjoldjfkhccllp)
+[![repository version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fvesmirov%2Freview-rail%2Fmaster%2Fmanifest.json&query=%24.version&label=repository&prefix=v)](manifest.json)
+[![license](https://img.shields.io/github/license/vesmirov/review-rail)](LICENSE)
+
+> [!WARNING]
+> Review Rail is pre-1.0 and under active development. Expect frequent
+> releases; bug reports are welcome in
+> [issues](https://github.com/vesmirov/review-rail/issues).
+
 Your code reviews, in the order you should do them.
 
 Review Rail is a browser extension that keeps a personal, ordered
