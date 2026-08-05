@@ -49,11 +49,16 @@ export async function myReviewerInfo(settings, projectId, iid) {
   try {
     const reviewers = await tapi(settings, `/projects/${projectId}/merge_requests/${iid}/reviewers`);
     const me = reviewers.find((r) => r.user && r.user.id === settings.userId);
-    if (!me) return { state: null, since: null };
+    if (!me) return { ok: true, found: false, state: null, since: null };
     const since = me.created_at ? Date.parse(me.created_at) : null;
-    return { state: me.state || null, since: Number.isNaN(since) ? null : since };
+    return {
+      ok: true,
+      found: true,
+      state: me.state || null,
+      since: Number.isNaN(since) ? null : since,
+    };
   } catch {
-    return { state: null, since: null };
+    return { ok: false, found: false, state: null, since: null };
   }
 }
 
@@ -271,19 +276,20 @@ export async function sync() {
     }
 
     step = 'check queue items';
+    // 'none' = poll succeeded, nothing to show; null/undefined = unknown, re-poll.
     const refreshPipeline = async (item, mr) => {
       try {
         if (mr && 'head_pipeline' in mr) {
-          item.pipeline = pipelineIndicator(mr.head_pipeline && mr.head_pipeline.status);
+          item.pipeline = pipelineIndicator(mr.head_pipeline && mr.head_pipeline.status) || 'none';
         } else {
           const pipes = await tapi(
             settings,
             `/projects/${item.projectId}/merge_requests/${item.iid}/pipelines?per_page=1`
           );
-          item.pipeline = pipelineIndicator(pipes && pipes[0] && pipes[0].status);
+          item.pipeline = pipelineIndicator(pipes && pipes[0] && pipes[0].status) || 'none';
         }
       } catch {
-        item.pipeline = null;
+        // a failed poll keeps the last known status
       }
     };
 
@@ -301,12 +307,10 @@ export async function sync() {
           fromList || (await tapi(settings, `/projects/${item.projectId}/merge_requests/${item.iid}`));
         refreshItemFromMr(item, mr, settings.asapLabel);
 
-        // Reviewer verdicts (request changes / approve) do not bump the MR's
-        // updated_at, so the reviewer state must be re-checked even when the
-        // delta-sync fast path skips everything else.
+        // Reviewer verdicts don't bump updated_at (verified against gitlab.com).
         const unchanged = fromList && item.updatedAt && fromList.updated_at === item.updatedAt;
         if (unchanged) {
-          if (item.pipeline === 'running') await refreshPipeline(item, null);
+          if (item.pipeline === 'running' || item.pipeline == null) await refreshPipeline(item, null);
           const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;
           const verdict = reviewerVerdict(rState);
           if (verdict) return { type: 'review-sent', item, how: verdict, rState };
@@ -321,9 +325,13 @@ export async function sync() {
         const approvedByMe = await fetchApprovedByMe(item);
 
         if (!approvedByMe && mr.state === 'opened') {
-          const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;
-          const verdict = reviewerVerdict(rState);
-          if (verdict) return { type: 'review-sent', item, how: verdict, rState };
+          const rInfo = await myReviewerInfo(settings, item.projectId, item.iid);
+          // Drop only on a confirmed absence — a failed /reviewers call must not evict cards.
+          if (!fromList && !item.viaGroup && rInfo.ok && !rInfo.found) {
+            return { type: 'unassigned', item };
+          }
+          const verdict = reviewerVerdict(rInfo.state);
+          if (verdict) return { type: 'review-sent', item, how: verdict, rState: rInfo.state };
         }
 
         let commented = false;
@@ -348,6 +356,7 @@ export async function sync() {
 
     let completed = 0;
     let removed = 0;
+    let unassigned = 0;
     const remaining = [];
     for (const outcome of outcomes) {
       if (outcome.type === 'review-sent') {
@@ -359,6 +368,8 @@ export async function sync() {
         completed++;
       } else if (outcome.type === 'gone') {
         removed++;
+      } else if (outcome.type === 'unassigned') {
+        unassigned++;
       } else if (outcome.type === 'keep') {
         remaining.push(outcome.item);
       }
@@ -403,7 +414,8 @@ export async function sync() {
     if (added) parts.push(`${added} added`);
     if (completed) parts.push(`${completed} completed`);
     if (removed) parts.push(`${removed} gone (404)`);
-    if (!added && !completed && !removed) parts.push('no changes');
+    if (unassigned) parts.push(`${unassigned} unassigned`);
+    if (!added && !completed && !removed && !unassigned) parts.push('no changes');
     logInfo('sync', `Synced in ${seconds} s · ${parts.join(' · ')}`);
 
     return { ok: true };

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Review Rail",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Personal code review queue for GitLab, self-hosted or gitlab.com. Know what to review next. All data stays in your browser.",
   "permissions": [
     "storage",

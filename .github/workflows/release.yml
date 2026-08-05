@@ -1,0 +1,22 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: zip -r review-rail.zip manifest.json src icons LICENSE THIRD-PARTY.md -x '.*' -x 'icons/src/*' -x 'icons/generate.py'
+      - run: gh release create "$GITHUB_REF_NAME" review-rail.zip --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
