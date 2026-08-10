@@ -183,8 +183,33 @@ test('revoked approval: card returns to the queue, credit is removed from histor
   assert.equal(store.queue.length, 1);
   assert.equal(store.queue[0].key, '1:5');
   assert.equal(typeof store.queue[0].requestedAt, 'number'); // age counter restarted
+  assert.equal(store.queue[0].reviewerState, 'unapproved'); // carried so hiding it sticks
   assert.deepEqual(store.history, []);
   assert.equal(typeof store.revokedApprovals['1:5'], 'number');
+});
+
+test('revoked approval withdraws only the latest credit, earlier rounds stay counted', async () => {
+  const older = { ...approvedEntry(), completedAt: Date.parse('2026-07-01T12:00:00Z') };
+  store.queue = [];
+  store.history = [approvedEntry(), older];
+  routes.assigned = ok([openMr]);
+  routes.reviewers = ok([{ user: { id: 7 }, state: 'unapproved', created_at: null }]);
+  await sync();
+  assert.equal(store.queue.length, 1);
+  assert.equal(store.history.length, 1);
+  assert.equal(store.history[0].completedAt, older.completedAt);
+});
+
+test('hidden group card survives a failed /approvals check (unproven is not gone)', async () => {
+  store.queue = [];
+  store.hidden = [{ ...queueItem({ viaGroup: true }), hiddenAt: 1e12, hiddenState: 'unreviewed' }];
+  routes.assigned = ok([]);
+  routes.approvers = ok([openMr]);
+  routes.approvals = fail();
+  routes.reviewers = ok([]);
+  await sync();
+  assert.equal(store.hidden.length, 1);
+  assert.equal(store.hidden[0].key, '1:5');
 });
 
 test('revoked approval: event backfill does not resurrect the removed credit', async () => {
