@@ -31,7 +31,15 @@ Rough order. Subject to change.
 3. **Your own MRs** — track their review status in the extension.
 4. **GitHub support** — same queue, same rules, pull requests.
 5. **Gamification** — streaks and milestones on top of the existing
-   honest stats.
+   honest stats, and an opt-in peer leaderboard (top reviewers per
+   day / week / month among colleagues you pick). Leaderboards will count
+   only GitLab-verifiable actions — approvals read from each user's own
+   events feed — because a fair competition needs numbers anyone can
+   reproduce. The local activity ledger (re-review rounds, request-changes
+   and comment verdicts) stays personal: GitLab keeps no queryable history
+   of those, so they can be tracked for you but not verified for others.
+   No backend either way — the leaderboard is computed by the extension
+   with the same read-only token.
 
 ## Out of scope
 
@@ -39,6 +47,8 @@ These are deliberate decisions, not missing features.
 
 - **Actions from the extension** (approve, merge, comment) — the
   extension is read-only, permanently.
-- **Team dashboards and manager metrics** — the queue is personal.
+- **Team dashboards and manager metrics** — the queue is personal. The
+  planned peer leaderboard is not this: it is opt-in competition between
+  colleagues, not reporting for someone above them.
 - **AI review** — plenty of other tools do this.
 - **Backend, accounts, telemetry** — everything stays in the browser.
