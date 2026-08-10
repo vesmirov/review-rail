@@ -4,12 +4,12 @@ import { projectPathFromUrl, normalizeBaseUrl, connectErrorMessage, api, apiAll 
 
 const BASE = 'https://gitlab.corp.com';
 
-test('projectPathFromUrl: извлекает путь проекта из web_url', () => {
+test('projectPathFromUrl: extracts the project path from web_url', () => {
   assert.equal(projectPathFromUrl(`${BASE}/org/sub/app/-/merge_requests/12`), 'org/sub/app');
   assert.equal(projectPathFromUrl('garbage'), '');
 });
 
-test('connectErrorMessage: человеческие сообщения вместо кодов', () => {
+test('connectErrorMessage: human-readable messages instead of status codes', () => {
   const err = (status) => Object.assign(new Error(`GitLab API ${status}: /user`), { status });
   assert.match(connectErrorMessage(err(401), BASE), /rejected the token/);
   assert.match(connectErrorMessage(err(403), BASE), /read_api/);
@@ -19,7 +19,7 @@ test('connectErrorMessage: человеческие сообщения вмес�
   assert.equal(connectErrorMessage(err(422), BASE), 'GitLab API 422: /user');
 });
 
-test('normalizeBaseUrl: обрезает слэши, принимает только https', () => {
+test('normalizeBaseUrl: trims slashes, accepts https only', () => {
   assert.equal(normalizeBaseUrl('  https://git.corp/// '), 'https://git.corp');
   assert.equal(normalizeBaseUrl('HTTPS://git.corp'), 'https://git.corp');
   assert.equal(normalizeBaseUrl('http://git.corp'), null);
@@ -27,13 +27,13 @@ test('normalizeBaseUrl: обрезает слэши, принимает толь
   assert.equal(normalizeBaseUrl(''), null);
 });
 
-test('normalizeBaseUrl: капс-схема принимается, путь сохраняется', () => {
+test('normalizeBaseUrl: uppercase scheme is accepted, path is preserved', () => {
   assert.equal(normalizeBaseUrl('HTTPS://Git.Corp'), 'https://git.corp');
   assert.equal(normalizeBaseUrl('https://host.com/gitlab/'), 'https://host.com/gitlab');
   assert.equal(normalizeBaseUrl('https://host.com/'), 'https://host.com');
 });
 
-test('apiAll: собирает страницы до неполной', async () => {
+test('apiAll: collects pages until a partial one', async () => {
   const calls = [];
   const orig = globalThis.fetch;
   globalThis.fetch = async (url) => {
@@ -53,7 +53,7 @@ test('apiAll: собирает страницы до неполной', async ()
   }
 });
 
-test('api: не-JSON ответ даёт понятную ошибку про SSO/прокси', async () => {
+test('api: non-JSON response yields a clear SSO/proxy error', async () => {
   const orig = globalThis.fetch;
   globalThis.fetch = async () => ({ ok: true, json: async () => { throw new SyntaxError('Unexpected token <'); } });
   try {

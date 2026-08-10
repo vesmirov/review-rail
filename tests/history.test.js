@@ -29,7 +29,7 @@ const entry = (key, completedAt, how = 'approved') => ({
   how,
 });
 
-test('approvalEventToEntry: маппинг события аппрува', () => {
+test('approvalEventToEntry: maps an approval event', () => {
   const e = approvalEventToEntry(event(), PATHS, BASE);
   assert.equal(e.key, '5:12');
   assert.equal(e.title, 'Fix things');
@@ -39,20 +39,20 @@ test('approvalEventToEntry: маппинг события аппрува', () =>
   assert.equal(e.how, 'approved');
 });
 
-test('approvalEventToEntry: не-MR события и битые данные отбрасываются', () => {
+test('approvalEventToEntry: non-MR events and malformed data are dropped', () => {
   assert.equal(approvalEventToEntry(event({ target_type: 'Issue' }), PATHS, BASE), null);
   assert.equal(approvalEventToEntry(event({ created_at: 'garbage' }), PATHS, BASE), null);
   assert.equal(approvalEventToEntry(null, PATHS, BASE), null);
 });
 
-test('approvalEventToEntry: неизвестный проект — без webUrl, но запись есть', () => {
+test('approvalEventToEntry: unknown project still yields an entry, just without webUrl', () => {
   const e = approvalEventToEntry(event({ project_id: 99 }), PATHS, BASE);
   assert.equal(e.projectPath, '');
   assert.equal(e.webUrl, '');
   assert.equal(e.key, '99:12');
 });
 
-test('mergeHistory: дедупликация по MR и дню', () => {
+test('mergeHistory: deduplicates by MR and day', () => {
   const day = Date.parse('2026-03-10T10:00:00Z');
   const existing = [entry('5:12', day)];
   const merged = mergeHistory(existing, [
@@ -64,19 +64,19 @@ test('mergeHistory: дедупликация по MR и дню', () => {
   assert.deepEqual(merged.map((e) => e.key).sort(), ['5:12', '5:13']);
 });
 
-test('mergeHistory: повторные аппрувы в разные дни — отдельные ревью', () => {
+test('mergeHistory: repeat approvals on different days count as separate reviews', () => {
   const d1 = Date.parse('2026-03-10T10:00:00Z');
   const d2 = Date.parse('2026-03-12T10:00:00Z');
   const merged = mergeHistory([], [entry('5:12', d1), entry('5:12', d2)]);
   assert.equal(merged.length, 2);
 });
 
-test('mergeHistory: сортировка по убыванию даты и лимит', () => {
+test('mergeHistory: sorts by date descending and applies the limit', () => {
   const merged = mergeHistory([entry('a', 100)], [entry('b', 300), entry('c', 200)], 2);
   assert.deepEqual(merged.map((e) => e.key), ['b', 'c']);
 });
 
-test('reconcileApprovals: заменяет аппрув-записи с датой обнаружения на реальные даты из событий', () => {
+test('reconcileApprovals: replaces detection-dated approval entries with real event dates', () => {
   const today = Date.parse('2026-07-31T12:00:00Z');
   const real = Date.parse('2026-03-10T10:00:00Z');
   const history = [entry('5:12', today, 'approved')];
@@ -85,14 +85,14 @@ test('reconcileApprovals: заменяет аппрув-записи с дато
   assert.equal(result[0].completedAt, real);
 });
 
-test('reconcileApprovals: ручные и commented-записи не трогает', () => {
+test('reconcileApprovals: leaves manual and commented entries untouched', () => {
   const t = Date.parse('2026-07-31T12:00:00Z');
   const history = [entry('5:12', t, 'manual'), entry('5:13', t, 'commented')];
   const result = reconcileApprovals(history, [entry('5:14', t - 864e5, 'approved')]);
   assert.equal(result.length, 3);
 });
 
-test('localDayStart: обнуляет время в локальной зоне', () => {
+test('localDayStart: zeroes the time in the local timezone', () => {
   const ts = new Date(2026, 6, 31, 18, 45).getTime();
   assert.equal(localDayStart(ts), new Date(2026, 6, 31, 0, 0, 0, 0).getTime());
 });

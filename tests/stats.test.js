@@ -16,18 +16,18 @@ import {
 const at = (y, m, d, h = 12) => new Date(y, m - 1, d, h).getTime();
 const NOW = at(2026, 7, 31, 15);
 
-test('startOfWeek: неделя начинается с понедельника', () => {
+test('startOfWeek: week starts on monday', () => {
   assert.equal(startOfWeek(NOW), at(2026, 7, 27, 0));
   assert.equal(startOfWeek(at(2026, 7, 27, 0)), at(2026, 7, 27, 0));
   assert.equal(startOfWeek(at(2026, 7, 26)), at(2026, 7, 20, 0));
 });
 
-test('startOfMonth и startOfDay', () => {
+test('startOfMonth and startOfDay', () => {
   assert.equal(startOfMonth(NOW), at(2026, 7, 1, 0));
   assert.equal(startOfDay(NOW), at(2026, 7, 31, 0));
 });
 
-test('computeStats: границы дня, недели и месяца', () => {
+test('computeStats: day, week and month boundaries', () => {
   const history = [
     { completedAt: at(2026, 7, 31, 9) },
     { completedAt: at(2026, 7, 30) },
@@ -43,11 +43,11 @@ test('computeStats: границы дня, недели и месяца', () => 
   assert.equal(s.total, 6);
 });
 
-test('computeStats: пустая история', () => {
+test('computeStats: empty history', () => {
   assert.deepEqual(computeStats([], NOW), { today: 0, yesterday: 0, week: 0, month: 0, prevWeek: 0, total: 0 });
 });
 
-test('activitySeries: 28 корзин по дням, счёт попадает в свой день', () => {
+test('activitySeries: 28 daily buckets, each count lands in its own day', () => {
   const history = [
     { completedAt: at(2026, 7, 31, 1) },
     { completedAt: at(2026, 7, 31, 23) },
@@ -62,7 +62,7 @@ test('activitySeries: 28 корзин по дням, счёт попадает �
   assert.equal(s.reduce((a, d) => a + d.count, 0), 3);
 });
 
-test('activityWeeks: 16 недель по 7 дней, понедельник сверху, будущие дни помечены', () => {
+test('activityWeeks: 16 weeks of 7 days, monday first, future days marked', () => {
   const weeks = activityWeeks([], 16, NOW);
   assert.equal(weeks.length, 16);
   assert.ok(weeks.every((w) => w.length === 7));
@@ -74,7 +74,7 @@ test('activityWeeks: 16 недель по 7 дней, понедельник с�
   assert.equal(lastWeek[6].level, -1);
 });
 
-test('activityWeeks: уровни пропорциональны максимуму', () => {
+test('activityWeeks: levels are proportional to the maximum', () => {
   const history = [
     { completedAt: at(2026, 7, 31, 10) },
     { completedAt: at(2026, 7, 31, 11) },
@@ -105,11 +105,11 @@ test('whenText: today, yesterday, date', () => {
   assert.equal(whenText(at(2026, 7, 20), NOW), 'Jul 20');
 });
 
-test('computeStats: prevWeek считает только прошлую календарную неделю', () => {
-  const now = Date.parse('2026-08-02T12:00:00'); // воскресенье
+test('computeStats: prevWeek counts only the previous calendar week', () => {
+  const now = Date.parse('2026-08-02T12:00:00'); // sunday
   const thisWeek = Date.parse('2026-07-29T10:00:00');
   const prevWeek1 = Date.parse('2026-07-22T10:00:00');
-  const prevWeek2 = Date.parse('2026-07-26T23:00:00'); // воскресенье прошлой недели
+  const prevWeek2 = Date.parse('2026-07-26T23:00:00'); // sunday of the previous week
   const older = Date.parse('2026-07-10T10:00:00');
   const h = [thisWeek, prevWeek1, prevWeek2, older].map((completedAt) => ({ completedAt }));
   const s = computeStats(h, now);
@@ -117,11 +117,11 @@ test('computeStats: prevWeek считает только прошлую кале
   assert.equal(s.prevWeek, 2);
 });
 
-test('computeStats: prevWeek ноль на пустой истории', () => {
+test('computeStats: prevWeek is zero on empty history', () => {
   assert.equal(computeStats([], Date.parse('2026-08-02T12:00:00')).prevWeek, 0);
 });
 
-test('monthTicks: метка на колонке, где сменился месяц', () => {
+test('monthTicks: tick on the column where the month changes', () => {
   const now = Date.parse('2026-08-02T12:00:00');
   const weeks = activityWeeks([], 16, now);
   const ticks = monthTicks(weeks);
@@ -132,16 +132,16 @@ test('monthTicks: метка на колонке, где сменился мес
   for (let i = 1; i < weeks.length; i++) {
     const prevM = new Date(weeks[i - 1][0].dayStart).getMonth();
     const curM = new Date(weeks[i][0].dayStart).getMonth();
-    assert.equal(Boolean(ticks[i]), prevM !== curM, `колонка ${i}`);
+    assert.equal(Boolean(ticks[i]), prevM !== curM, `column ${i}`);
   }
 });
 
-test('monthStartLabel: подпись начала текущего месяца', () => {
+test('monthStartLabel: label for the start of the current month', () => {
   assert.equal(monthStartLabel(Date.parse('2026-08-02T12:00:00')), 'since Aug 1');
   assert.equal(monthStartLabel(Date.parse('2026-01-15T12:00:00')), 'since Jan 1');
 });
 
-test('computeStats: yesterday считает только вчерашний день', () => {
+test('computeStats: yesterday counts only the previous day', () => {
   const now = Date.parse('2026-08-02T12:00:00');
   const h = [
     { completedAt: Date.parse('2026-08-02T09:00:00') },
