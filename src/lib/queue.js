@@ -181,10 +181,14 @@ export function waitingState(reviewerState) {
   return null;
 }
 
-export function shouldAutoAdd({ inQueue, inHistory, reviewerState, isSnoozed = false }) {
+export function shouldAutoAdd({ inQueue, inHistory, reviewerState, isSnoozed = false, viaGroup = false }) {
   if (inQueue) return false;
   if (waitingState(reviewerState) || reviewerState === 'approved') return false;
   if (isSnoozed) return false;
   if (!inHistory) return true;
-  return reviewerState === 'unreviewed';
+  return (
+    reviewerState === 'unreviewed' ||
+    reviewerState === 'unapproved' ||
+    (viaGroup && reviewerState == null)
+  );
 }

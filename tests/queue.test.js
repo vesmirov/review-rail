@@ -26,28 +26,28 @@ import {
 
 const item = (key, asap = false) => ({ key, asap });
 
-test('mrKey объединяет проект и iid', () => {
+test('mrKey joins project id and iid', () => {
   assert.equal(mrKey(42, 7), '42:7');
 });
 
-test('hasAsapLabel: без учёта регистра, метка по умолчанию asap', () => {
+test('hasAsapLabel: case-insensitive, default label is asap', () => {
   assert.equal(hasAsapLabel(['bug', 'ASAP']), true);
   assert.equal(hasAsapLabel(['bug']), false);
   assert.equal(hasAsapLabel([]), false);
   assert.equal(hasAsapLabel(undefined), false);
 });
 
-test('hasAsapLabel: настраиваемое имя метки', () => {
+test('hasAsapLabel: configurable label name', () => {
   assert.equal(hasAsapLabel(['priority::urgent'], 'priority::urgent'), true);
   assert.equal(hasAsapLabel(['asap'], 'priority::urgent'), false);
 });
 
-test('queueItemFromMr переносит поля MR, дату открытия, лейблы и asap-флаг', () => {
+test('queueItemFromMr copies MR fields, opened date, labels and the asap flag', () => {
   const mr = {
     project_id: 5,
     iid: 12,
     title: 'Fix things',
-    author: { name: 'Аня' },
+    author: { name: 'Anya' },
     web_url: 'https://git.corp/team/app/-/merge_requests/12',
     labels: ['ASAP', 'backend'],
     created_at: '2026-07-01T10:00:00.000Z',
@@ -58,7 +58,7 @@ test('queueItemFromMr переносит поля MR, дату открытия,
     projectId: 5,
     iid: 12,
     title: 'Fix things',
-    author: 'Аня',
+    author: 'Anya',
     projectPath: 'team/app',
     webUrl: 'https://git.corp/team/app/-/merge_requests/12',
     addedAt: 1000,
@@ -70,13 +70,13 @@ test('queueItemFromMr переносит поля MR, дату открытия,
   });
 });
 
-test('queueItemFromMr: без created_at подставляется now', () => {
+test('queueItemFromMr: falls back to now when created_at is missing', () => {
   const mr = { project_id: 1, iid: 2, title: 't', author: null, web_url: 'x', labels: [] };
   const it = queueItemFromMr(mr, { projectPath: 'p', asapLabel: 'asap', source: 'auto', now: 42 });
   assert.equal(it.createdAt, 42);
 });
 
-test('refreshItemFromMr: дозаполняет дату открытия у старых карточек без createdAt', () => {
+test('refreshItemFromMr: backfills the opened date on legacy cards without createdAt', () => {
   const item = { key: '5:12', title: 'old', labels: [], asap: false };
   refreshItemFromMr(item, {
     title: 'new title',
@@ -89,13 +89,13 @@ test('refreshItemFromMr: дозаполняет дату открытия у с�
   assert.equal(item.asap, true);
 });
 
-test('refreshItemFromMr: без created_at в ответе дата не трогается', () => {
+test('refreshItemFromMr: keeps the date when the response has no created_at', () => {
   const item = { key: '5:12', title: 'old', labels: [], asap: false, createdAt: 123 };
   refreshItemFromMr(item, { title: 't', labels: [] }, 'asap');
   assert.equal(item.createdAt, 123);
 });
 
-test('labelTextColor: тёмный текст на светлом фоне, светлый — на тёмном', () => {
+test('labelTextColor: dark text on light backgrounds, light text on dark ones', () => {
   assert.equal(labelTextColor('#ffffff'), '#1f2124');
   assert.equal(labelTextColor('#f5d90a'), '#1f2124');
   assert.equal(labelTextColor('#dc3545'), '#ffffff');
@@ -103,7 +103,7 @@ test('labelTextColor: тёмный текст на светлом фоне, св
   assert.equal(labelTextColor('garbage'), '#ffffff');
 });
 
-test('drag без срочных: любая карточка становится первой в списке', () => {
+test('drag with no urgent items: any card can become first in the list', () => {
   const q = [
     { key: 'a', asap: false },
     { key: 'b', asap: false },
@@ -115,7 +115,7 @@ test('drag без срочных: любая карточка становитс
   assert.deepEqual(normal.map((i) => i.key), ['c', 'a', 'b']);
 });
 
-test('drag при срочных: asap меняются приоритетом между собой, обычные не двигаются', () => {
+test('drag with urgent items: asap cards swap priority among themselves, normal ones do not move', () => {
   const q = [
     { key: 'n1', asap: false },
     { key: 'a1', asap: true },
@@ -130,7 +130,7 @@ test('drag при срочных: asap меняются приоритетом �
   assert.deepEqual(reordered.map((i) => i.key), ['n1', 'a2', 'n2', 'a1']);
 });
 
-test('drag обычных под срочными: первым остаётся asap', () => {
+test('drag of normal cards below urgent ones: an asap card stays first', () => {
   const q = [
     { key: 'a1', asap: true },
     { key: 'n1', asap: false },
@@ -142,30 +142,30 @@ test('drag обычных под срочными: первым остаётся
   assert.deepEqual(normal.map((i) => i.key), ['n2', 'n1']);
 });
 
-test('resolveRequestedAt: первая итерация — дата назначения ревьюером, повторная — момент возврата', () => {
+test('resolveRequestedAt: first review uses the reviewer assignment date, re-review uses the moment it came back', () => {
   assert.equal(resolveRequestedAt({ isReReview: false, reviewerSince: 500, now: 1000 }), 500);
   assert.equal(resolveRequestedAt({ isReReview: true, reviewerSince: 500, now: 1000 }), 1000);
   assert.equal(resolveRequestedAt({ isReReview: false, reviewerSince: null, now: 1000 }), 1000);
 });
 
-test('reorderWithin: переставляет только перечисленные элементы, чужие позиции не трогает', () => {
+test('reorderWithin: moves only the listed items, other positions stay untouched', () => {
   const q = [item('a'), item('b'), item('c'), item('d')];
   const next = reorderWithin(q, ['c', 'b']);
   assert.deepEqual(next.map((i) => i.key), ['a', 'c', 'b', 'd']);
 });
 
-test('reorderWithin: игнорирует устаревшие ключи', () => {
+test('reorderWithin: ignores stale keys', () => {
   const q = [item('a'), item('b')];
   const next = reorderWithin(q, ['b', 'gone', 'a']);
   assert.deepEqual(next.map((i) => i.key), ['b', 'a']);
 });
 
-test('reorderWithin: пустой список ключей ничего не меняет', () => {
+test('reorderWithin: an empty key list changes nothing', () => {
   const q = [item('a'), item('b')];
   assert.deepEqual(reorderWithin(q, []).map((i) => i.key), ['a', 'b']);
 });
 
-test('partitionQueue: asap-блок первым, «следующее» — первый asap', () => {
+test('partitionQueue: asap block goes first, the next item is the first asap', () => {
   const q = [item('a'), item('b', true), item('c'), item('d', true)];
   const { asap, normal, nextKey } = partitionQueue(q);
   assert.deepEqual(asap.map((i) => i.key), ['b', 'd']);
@@ -173,68 +173,80 @@ test('partitionQueue: asap-блок первым, «следующее» — п�
   assert.equal(nextKey, 'b');
 });
 
-test('partitionQueue: без asap «следующее» — голова FIFO', () => {
+test('partitionQueue: with no asap the next item is the FIFO head', () => {
   const { nextKey } = partitionQueue([item('a'), item('b')]);
   assert.equal(nextKey, 'a');
 });
 
-test('partitionQueue: пустая очередь', () => {
+test('partitionQueue: empty queue', () => {
   assert.deepEqual(partitionQueue([]), { asap: [], normal: [], nextKey: null });
 });
 
-test('decideCompletion: аппрув засчитывается всегда', () => {
+test('decideCompletion: an approval always counts', () => {
   assert.equal(decideCompletion({ state: 'opened', approvedByMe: true, commented: false }), 'approved');
   assert.equal(decideCompletion({ state: 'merged', approvedByMe: true, commented: true }), 'approved');
 });
 
-test('decideCompletion: влит/закрыт с комментариями — засчитан, без — удалён', () => {
+test('decideCompletion: merged/closed with comments counts, without comments is dropped', () => {
   assert.equal(decideCompletion({ state: 'merged', approvedByMe: false, commented: true }), 'commented');
   assert.equal(decideCompletion({ state: 'closed', approvedByMe: false, commented: false }), 'drop');
 });
 
-test('decideCompletion: открытый MR без аппрува остаётся в очереди', () => {
+test('decideCompletion: an open MR without approval stays in the queue', () => {
   assert.equal(decideCompletion({ state: 'opened', approvedByMe: false, commented: true }), 'keep');
 });
 
-test('reviewerVerdict: request changes и submitted review засчитываются', () => {
+test('reviewerVerdict: request changes and submitted review count', () => {
   assert.equal(reviewerVerdict('requested_changes'), 'changes_requested');
   assert.equal(reviewerVerdict('reviewed'), 'commented');
 });
 
-test('reviewerVerdict: unreviewed, approved и неизвестные статусы — не зачёт', () => {
+test('reviewerVerdict: unreviewed, approved and unknown statuses do not count', () => {
   assert.equal(reviewerVerdict('unreviewed'), null);
   assert.equal(reviewerVerdict('approved'), null);
   assert.equal(reviewerVerdict(null), null);
   assert.equal(reviewerVerdict('review_started'), null);
 });
 
-test('shouldAutoAdd: новый MR добавляется, уже стоящий в очереди — нет', () => {
+test('shouldAutoAdd: a new MR is added, one already in the queue is not', () => {
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: null }), true);
   assert.equal(shouldAutoAdd({ inQueue: true, inHistory: false, reviewerState: null }), false);
 });
 
-test('shouldAutoAdd: после зачтённого ревью MR возвращается только при повторном запросе ревью', () => {
+test('shouldAutoAdd: after a counted review the MR comes back only when review is requested again', () => {
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: 'unreviewed' }), true);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: 'requested_changes' }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: 'approved' }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: null }), false);
 });
 
-test('shouldAutoAdd: MR с уже отправленным ревью не попадает в очередь даже без истории', () => {
+
+test('shouldAutoAdd: a revoked approval puts the MR back in the queue', () => {
+  assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: 'unapproved' }), true);
+  // a group MR (no reviewer record) appears in the approver list again without an approval
+  assert.equal(
+    shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: null, viaGroup: true }),
+    true
+  );
+  // a regular MR with a null state still does not come back
+  assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: null }), false);
+});
+
+test('shouldAutoAdd: an MR with an already submitted review does not enter the queue even without history', () => {
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'requested_changes' }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'reviewed' }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'approved' }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'unreviewed' }), true);
 });
 
-test('shouldAutoAdd: убранный вручную MR (snooze) не возвращается, пока висит в GitLab без ревью', () => {
+test('shouldAutoAdd: a manually removed (snoozed) MR does not come back while it sits in GitLab unreviewed', () => {
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'unreviewed', isSnoozed: true }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: true, reviewerState: 'unreviewed', isSnoozed: true }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: null, isSnoozed: true }), false);
   assert.equal(shouldAutoAdd({ inQueue: false, inHistory: false, reviewerState: 'unreviewed', isSnoozed: false }), true);
 });
 
-test('hideItem: переносит MR из очереди в скрытые со штампом времени и состоянием', () => {
+test('hideItem: moves an MR from the queue to hidden with a timestamp and its state', () => {
   const state = { queue: [{ key: 'a', title: 'A' }, { key: 'b', title: 'B' }], hidden: [], waiting: [] };
   const { queue, hidden } = hideItem(state, 'a', 777);
   assert.deepEqual(queue.map((i) => i.key), ['b']);
@@ -244,7 +256,7 @@ test('hideItem: переносит MR из очереди в скрытые со
   assert.equal(hidden[0].hiddenState, 'unreviewed');
 });
 
-test('hideItem: прячет карточку из раздела ожидания, запоминая её статус', () => {
+test('hideItem: hides a card from the waiting section, remembering its state', () => {
   const state = {
     queue: [],
     hidden: [],
@@ -256,7 +268,7 @@ test('hideItem: прячет карточку из раздела ожидани
   assert.equal(hidden[0].hiddenAt, 500);
 });
 
-test('hideItem: неизвестный ключ — ничего не меняется', () => {
+test('hideItem: unknown key changes nothing', () => {
   const state = { queue: [{ key: 'a' }], hidden: [], waiting: [] };
   const { queue, hidden, waiting } = hideItem(state, 'nope', 1);
   assert.deepEqual(queue, state.queue);
@@ -264,7 +276,7 @@ test('hideItem: неизвестный ключ — ничего не меняе
   assert.deepEqual(waiting, []);
 });
 
-test('restoreItem: спрятанный из очереди возвращается в очередь', () => {
+test('restoreItem: an item hidden from the queue returns to the queue', () => {
   const state = {
     queue: [{ key: 'b' }],
     hidden: [{ key: 'a', title: 'A', requestedAt: 100, addedAt: 100, hiddenAt: 200, hiddenState: 'unreviewed' }],
@@ -280,7 +292,7 @@ test('restoreItem: спрятанный из очереди возвращает
   assert.deepEqual(waiting, []);
 });
 
-test('restoreItem: спрятанный из ожидания возвращается в свой раздел, а не в очередь', () => {
+test('restoreItem: an item hidden from waiting returns to its own section, not the queue', () => {
   const state = {
     queue: [],
     hidden: [{ key: 'w', title: 'W', hiddenAt: 1, hiddenState: 'reviewed' }],
@@ -294,14 +306,14 @@ test('restoreItem: спрятанный из ожидания возвращае
   assert.equal(waiting[0].hiddenAt, undefined);
 });
 
-test('restoreItem: неизвестный ключ — ничего не меняется', () => {
+test('restoreItem: unknown key changes nothing', () => {
   const state = { queue: [], hidden: [{ key: 'a', hiddenAt: 1 }], waiting: [] };
   const { queue, hidden } = restoreItem(state, 'nope');
   assert.deepEqual(queue, []);
   assert.deepEqual(hidden, state.hidden);
 });
 
-test('applyQueueActions: действия пользователя переигрываются поверх результата синка', () => {
+test('applyQueueActions: user actions are replayed on top of the sync result', () => {
   const state = {
     queue: [
       { key: 'a', title: 'A' },
@@ -321,7 +333,7 @@ test('applyQueueActions: действия пользователя переиг�
   assert.equal(result.hidden[0].hiddenAt, 100);
 });
 
-test('applyQueueActions: скрытие карточки ожидания переигрывается поверх синка', () => {
+test('applyQueueActions: hiding a waiting card is replayed on top of sync', () => {
   const state = {
     queue: [{ key: 'a' }],
     hidden: [],
@@ -333,7 +345,7 @@ test('applyQueueActions: скрытие карточки ожидания пер
   assert.equal(result.hidden[0].hiddenState, 'reviewed');
 });
 
-test('applyQueueActions: действия над исчезнувшими MR игнорируются', () => {
+test('applyQueueActions: actions on MRs that disappeared are ignored', () => {
   const state = { queue: [{ key: 'a' }], hidden: [], waiting: [] };
   const result = applyQueueActions(state, [
     { type: 'hide', key: 'gone', ts: 1 },
@@ -343,7 +355,7 @@ test('applyQueueActions: действия над исчезнувшими MR и�
   assert.deepEqual(result.hidden, []);
 });
 
-test('shouldUnhide: возврат при изменении состояния относительно момента скрытия', () => {
+test('shouldUnhide: unhides when the state changed relative to the moment of hiding', () => {
   assert.equal(shouldUnhide('unreviewed', 'requested_changes'), true);
   assert.equal(shouldUnhide('approved', 'requested_changes'), true);
   assert.equal(shouldUnhide('requested_changes', 'requested_changes'), false);
@@ -352,17 +364,17 @@ test('shouldUnhide: возврат при изменении состояния 
   assert.equal(shouldUnhide('unreviewed', 'unreviewed'), false);
 });
 
-test('shouldUnhide: неизвестное текущее состояние не снимает скрытие', () => {
+test('shouldUnhide: an unknown current state does not unhide', () => {
   assert.equal(shouldUnhide(null, 'requested_changes'), false);
   assert.equal(shouldUnhide(null, null), false);
 });
 
-test('shouldUnhide: старые записи без hiddenState считаются спрятанными из очереди', () => {
+test('shouldUnhide: legacy records without hiddenState are treated as hidden from the queue', () => {
   assert.equal(shouldUnhide('requested_changes', undefined), true);
   assert.equal(shouldUnhide('unreviewed', undefined), false);
 });
 
-test('sortLabels: метка срочности всегда первая', () => {
+test('sortLabels: the urgency label always comes first', () => {
   assert.deepEqual(sortLabels(['backend', 'config', 'asap'], 'asap'), ['asap', 'backend', 'config']);
   assert.deepEqual(sortLabels(['backend', 'ASAP'], 'asap'), ['ASAP', 'backend']);
   assert.deepEqual(sortLabels(['backend', 'priority::urgent'], 'priority::urgent'), [
@@ -374,7 +386,7 @@ test('sortLabels: метка срочности всегда первая', () =
   assert.deepEqual(sortLabels(undefined, 'asap'), []);
 });
 
-test('waitingState: в блок ожидания попадают requested_changes и reviewed', () => {
+test('waitingState: only requested_changes and reviewed land in the waiting block', () => {
   assert.equal(waitingState('requested_changes'), 'requested_changes');
   assert.equal(waitingState('reviewed'), 'reviewed');
   assert.equal(waitingState('approved'), null);
@@ -382,7 +394,7 @@ test('waitingState: в блок ожидания попадают requested_chan
   assert.equal(waitingState(null), null);
 });
 
-test('pipelineIndicator: три состояния и отсутствие иконки', () => {
+test('pipelineIndicator: three states and no icon otherwise', () => {
   assert.equal(pipelineIndicator('success'), 'passed');
   assert.equal(pipelineIndicator('failed'), 'failed');
   for (const s of ['created', 'waiting_for_resource', 'preparing', 'pending', 'running']) {
@@ -393,7 +405,7 @@ test('pipelineIndicator: три состояния и отсутствие ик�
   }
 });
 
-test('mergeReviewerAndApprover: дедуп по ключу, ревьюерский список главнее', () => {
+test('mergeReviewerAndApprover: dedupes by key, the reviewer list takes precedence', () => {
   const rev = [{ project_id: 1, iid: 10, author: { id: 2 } }];
   const app = [
     { project_id: 1, iid: 10, author: { id: 2 } },
@@ -404,7 +416,7 @@ test('mergeReviewerAndApprover: дедуп по ключу, ревьюерски
   assert.equal(extras[0].iid, 11);
 });
 
-test('mergeReviewerAndApprover: свои MR исключаются', () => {
+test('mergeReviewerAndApprover: own MRs are excluded', () => {
   const app = [
     { project_id: 1, iid: 20, author: { id: 658 } },
     { project_id: 1, iid: 21, author: { id: 3 } },
@@ -414,13 +426,13 @@ test('mergeReviewerAndApprover: свои MR исключаются', () => {
   assert.deepEqual(extras.map((m) => m.iid), [21, 22]);
 });
 
-test('mergeReviewerAndApprover: пустые и отсутствующие списки', () => {
+test('mergeReviewerAndApprover: empty and missing lists', () => {
   assert.deepEqual(mergeReviewerAndApprover([], [], 1), []);
   assert.deepEqual(mergeReviewerAndApprover([], undefined, 1), []);
   assert.deepEqual(mergeReviewerAndApprover([{ project_id: 1, iid: 1, author: null }], undefined, 1), []);
 });
 
-test('mergeReviewerAndApprover: дубликаты внутри approver-списка схлопываются', () => {
+test('mergeReviewerAndApprover: duplicates inside the approver list collapse', () => {
   const app = [
     { project_id: 1, iid: 30, author: { id: 3 } },
     { project_id: 1, iid: 30, author: { id: 3 } },
@@ -428,7 +440,7 @@ test('mergeReviewerAndApprover: дубликаты внутри approver-спи�
   assert.equal(mergeReviewerAndApprover([], app, 1).length, 1);
 });
 
-test('queueItemFromMr: viaGroup выставляется только когда передан', () => {
+test('queueItemFromMr: viaGroup is set only when passed', () => {
   const mr = { project_id: 1, iid: 2, title: 't', author: null, web_url: 'x', labels: [] };
   const plain = queueItemFromMr(mr, { projectPath: 'p', asapLabel: 'asap', source: 'auto', now: 1 });
   assert.equal('viaGroup' in plain, false);
@@ -436,26 +448,27 @@ test('queueItemFromMr: viaGroup выставляется только когда
   assert.equal(grouped.viaGroup, true);
 });
 
-test('refreshItemFromMr: не трогает viaGroup', () => {
+test('refreshItemFromMr: leaves viaGroup untouched', () => {
   const item = { key: '1:2', title: 'old', labels: [], asap: false, viaGroup: true };
   refreshItemFromMr(item, { title: 'new', labels: [] }, 'asap');
   assert.equal(item.viaGroup, true);
 });
 
-test('shortName: второе и последующие слова сокращаются до инициалов', () => {
-  assert.equal(shortName('Александр Виноградов'), 'Александр В.');
-  assert.equal(shortName('Мария Петрова-Водкина'), 'Мария П.');
-  assert.equal(shortName('Анна Мария Крестовская'), 'Анна М. К.');
+test('shortName: second and later words shrink to initials', () => {
+  assert.equal(shortName('Alexander Vinogradov'), 'Alexander V.');
+  assert.equal(shortName('Maria Petrova-Vodkina'), 'Maria P.');
+  assert.equal(shortName('Anna Maria Krestovskaya'), 'Anna M. K.');
+  assert.equal(shortName('José Álvarez'), 'José Á.'); // non-ASCII names keep their accents
 });
 
-test('shortName: одно слово, пустота и лишние пробелы', () => {
+test('shortName: single word, empty input and extra spaces', () => {
   assert.equal(shortName('vesmirov'), 'vesmirov');
-  assert.equal(shortName('  Иван   Петров  '), 'Иван П.');
+  assert.equal(shortName('  Ivan   Petrov  '), 'Ivan P.');
   assert.equal(shortName(''), '');
   assert.equal(shortName(undefined), '');
 });
 
-test('shortPath: остаётся последний сегмент пути', () => {
+test('shortPath: keeps the last path segment', () => {
   assert.equal(shortPath('platform-core/billing/py.payment-orchestrator'), 'py.payment-orchestrator');
   assert.equal(shortPath('acme/gateway'), 'gateway');
   assert.equal(shortPath('gateway'), 'gateway');

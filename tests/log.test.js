@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { hintForStatus, normalizeApiPath, apiErrorEntry, pushLog } from '../src/lib/log.js';
 
-test('hintForStatus: понятные подсказки для типовых статусов', () => {
+test('hintForStatus: clear hints for common statuses', () => {
   assert.match(hintForStatus(401), /Reset token/);
   assert.match(hintForStatus(403), /read_api/);
   assert.match(hintForStatus(404), /GitLab version/);
@@ -12,7 +12,7 @@ test('hintForStatus: понятные подсказки для типовых �
   assert.equal(hintForStatus(422), null);
 });
 
-test('normalizeApiPath: числовые id и query сворачиваются', () => {
+test('normalizeApiPath: numeric ids and query strings are collapsed', () => {
   assert.equal(
     normalizeApiPath('/projects/42/merge_requests/581/approvals'),
     '/projects/:id/merge_requests/:id/approvals'
@@ -24,7 +24,7 @@ test('normalizeApiPath: числовые id и query сворачиваются'
   assert.equal(normalizeApiPath('/users/7/events'), '/users/:id/events');
 });
 
-test('apiErrorEntry: собирает сообщение, детали и подсказку', () => {
+test('apiErrorEntry: builds message, detail, and hint', () => {
   const err = new Error('GitLab API 403');
   err.status = 403;
   err.path = '/projects/42/merge_requests/581/approvals';
@@ -39,7 +39,7 @@ test('apiErrorEntry: собирает сообщение, детали и под
   assert.equal(entry.ts, 1000);
 });
 
-test('apiErrorEntry: сетевая ошибка без статуса', () => {
+test('apiErrorEntry: network error without a status', () => {
   const err = new Error('GitLab is unreachable');
   err.status = 0;
   err.path = '/user';
@@ -51,7 +51,7 @@ test('apiErrorEntry: сетевая ошибка без статуса', () => {
 const info = (ts) => ({ ts, level: 'info', source: 'sync', message: `sync ${ts}`, count: 1 });
 const err = (ts) => ({ ts, level: 'error', source: 'api', message: `err ${ts}`, count: 1 });
 
-test('pushLog: новые записи встают в начало, ничего не схлопывается', () => {
+test('pushLog: new entries go to the front, nothing is collapsed', () => {
   const list = [];
   pushLog(list, info(1));
   pushLog(list, info(2));
@@ -60,7 +60,7 @@ test('pushLog: новые записи встают в начало, ничег�
   assert.ok(list.every((e) => e.count === 1));
 });
 
-test('pushLog: одинаковые подряд записи остаются отдельными строками', () => {
+test('pushLog: identical consecutive entries stay separate rows', () => {
   const list = [];
   const same = (ts) => ({ ts, level: 'error', source: 'api', message: 'GET /x → 401', count: 1 });
   pushLog(list, same(1));
@@ -68,7 +68,7 @@ test('pushLog: одинаковые подряд записи остаются �
   assert.equal(list.length, 2);
 });
 
-test('pushLog: квота уровня вытесняет только записи того же уровня', () => {
+test('pushLog: a level quota evicts only entries of the same level', () => {
   const list = [];
   pushLog(list, err(1));
   for (let i = 2; i <= 5; i++) pushLog(list, info(i), { error: 2, info: 3 });
@@ -76,7 +76,7 @@ test('pushLog: квота уровня вытесняет только запи�
   assert.equal(list.filter((e) => e.level === 'error').length, 1);
 });
 
-test('pushLog: ошибки не вымываются потоком info и наоборот', () => {
+test('pushLog: errors are not washed out by a stream of info entries and vice versa', () => {
   const list = [];
   const limits = { error: 2, info: 2 };
   pushLog(list, err(1), limits);

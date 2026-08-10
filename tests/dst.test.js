@@ -5,43 +5,43 @@ import assert from 'node:assert/strict';
 import { computeStats, activityWeeks, activitySeries } from '../src/lib/stats.js';
 import { reconcileApprovals } from '../src/lib/history.js';
 
-// В Берлине 29 марта 2026 переход CET -> CEST: в сутках 23 часа.
+// In Berlin the CET -> CEST switch happens on March 29, 2026: that day has 23 hours.
 
-test('DST: yesterday считается календарно, а не минус 24 часа', () => {
-  const now = new Date(2026, 2, 30, 12, 0).getTime(); // 30 марта, день после перевода
+test('DST: yesterday is computed by calendar day, not minus 24 hours', () => {
+  const now = new Date(2026, 2, 30, 12, 0).getTime(); // March 30, the day after the switch
   const h = [
-    { completedAt: new Date(2026, 2, 29, 10, 0).getTime() }, // вчера
-    { completedAt: new Date(2026, 2, 28, 23, 30).getTime() }, // позавчера, поздний вечер
+    { completedAt: new Date(2026, 2, 29, 10, 0).getTime() }, // yesterday
+    { completedAt: new Date(2026, 2, 28, 23, 30).getTime() }, // the day before yesterday, late evening
   ];
   const s = computeStats(h, now);
-  assert.equal(s.yesterday, 1, 'позавчерашний вечер не должен попадать во вчера');
+  assert.equal(s.yesterday, 1, 'the day-before-yesterday evening must not count as yesterday');
 });
 
-test('DST: все ячейки activityWeeks начинаются в локальную полночь', () => {
-  const now = new Date(2026, 3, 15, 12, 0).getTime(); // середина апреля, переход внутри окна
+test('DST: every activityWeeks cell starts at local midnight', () => {
+  const now = new Date(2026, 3, 15, 12, 0).getTime(); // mid-April, the switch falls inside the window
   const weeks = activityWeeks([], 16, now);
   for (const week of weeks) {
     for (const day of week) {
       const d = new Date(day.dayStart);
-      assert.equal(d.getHours(), 0, `не полночь: ${d.toString()}`);
+      assert.equal(d.getHours(), 0, `not midnight: ${d.toString()}`);
       assert.equal(d.getMinutes(), 0);
     }
   }
 });
 
-test('DST: activityWeeks кладёт ревью в правильный день после перевода', () => {
+test('DST: activityWeeks places a review into the correct day after the switch', () => {
   const now = new Date(2026, 3, 15, 12, 0).getTime();
-  const reviewDay = new Date(2026, 3, 3, 15, 0); // 3 апреля, после перевода
+  const reviewDay = new Date(2026, 3, 3, 15, 0); // April 3, after the switch
   const weeks = activityWeeks([{ completedAt: reviewDay.getTime() }], 16, now);
   const cell = weeks.flat().find((c) => {
     const d = new Date(c.dayStart);
     return d.getMonth() === 3 && d.getDate() === 3;
   });
-  assert.ok(cell, 'ячейка 3 апреля существует');
+  assert.ok(cell, 'the April 3 cell exists');
   assert.equal(cell.count, 1);
 });
 
-test('DST: activitySeries начинается в локальные полуночи', () => {
+test('DST: activitySeries days start at local midnight', () => {
   const now = new Date(2026, 2, 31, 12, 0).getTime();
   const series = activitySeries([], 7, now);
   for (const day of series) {
@@ -49,7 +49,7 @@ test('DST: activitySeries начинается в локальные полун�
   }
 });
 
-test('reconcileApprovals: старый апрув вне окна событий выживает', () => {
+test('reconcileApprovals: an old approval outside the events window survives', () => {
   const may = new Date(2026, 4, 10, 12, 0).getTime();
   const august = new Date(2026, 7, 1, 12, 0).getTime();
   const history = [
@@ -59,10 +59,10 @@ test('reconcileApprovals: старый апрув вне окна событий
     { key: '5:12', title: 'MR', projectPath: 'p', iid: 12, webUrl: '', completedAt: august, how: 'approved' },
   ];
   const merged = reconcileApprovals(history, events);
-  assert.equal(merged.length, 2, 'оба апрува должны сохраниться');
+  assert.equal(merged.length, 2, 'both approvals must be kept');
 });
 
-test('reconcileApprovals: дубликат внутри окна заменяется событием', () => {
+test('reconcileApprovals: a duplicate inside the window is replaced by the event', () => {
   const t = new Date(2026, 7, 1, 12, 0).getTime();
   const history = [
     { key: '5:12', title: 'stale', projectPath: 'p', iid: 12, webUrl: '', completedAt: t + 60e3, how: 'approved' },
