@@ -198,6 +198,7 @@ export async function sync() {
     step = 'fetch group-approval MRs';
     let groupExtras = [];
     let approverListOk = true;
+    const unverifiedGroupKeys = new Set();
     if (settings.userId) {
       const approverMrs = await tapiAll(
         settings,
@@ -220,6 +221,9 @@ export async function sync() {
             .catch(() => null)
         );
         // null = check failed; skip the MR this cycle rather than guess either way.
+        groupExtras.forEach((mr, i) => {
+          if (approvedChecks[i] === null) unverifiedGroupKeys.add(mrKey(mr.project_id, mr.iid));
+        });
         groupExtras = groupExtras.filter((_, i) => approvedChecks[i] === false);
       }
     }
@@ -275,10 +279,15 @@ export async function sync() {
         })
       ) {
         if (inHistory && reviewerState !== 'unreviewed') {
-          revokedKeys.push(key);
-          for (let i = history.length - 1; i >= 0; i--) {
-            if (history[i].key === key && history[i].how === 'approved') history.splice(i, 1);
+          // Withdraw only the latest counted approval; earlier entries are
+          // previous, already-spent review rounds.
+          let latest = -1;
+          for (let i = 0; i < history.length; i++) {
+            if (history[i].key !== key || history[i].how !== 'approved') continue;
+            if (latest < 0 || history[i].completedAt > history[latest].completedAt) latest = i;
           }
+          if (latest >= 0) history.splice(latest, 1);
+          revokedKeys.push(key);
         }
         const queueItem = queueItemFromMr(mr, {
           projectPath: projectPathFromUrl(mr.web_url),
@@ -288,6 +297,7 @@ export async function sync() {
           requestedAt: resolveRequestedAt({ isReReview: inHistory, reviewerSince: info.since }),
         });
         queueItem.updatedAt = mr.updated_at;
+        if (reviewerState) queueItem.reviewerState = reviewerState;
         queue.push(queueItem);
         queueKeys.add(key);
         added++;
@@ -344,6 +354,7 @@ export async function sync() {
         if (unchanged) {
           if (item.pipeline === 'running' || item.pipeline == null) await refreshPipeline(item, null);
           const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;
+          if (rState) item.reviewerState = rState;
           const verdict = reviewerVerdict(rState);
           if (verdict) return { type: 'review-sent', item, how: verdict, rState };
           if (rState === 'approved' && (await fetchApprovedByMe(item))) {
@@ -358,6 +369,7 @@ export async function sync() {
 
         if (!approvedByMe && mr.state === 'opened') {
           const rInfo = await myReviewerInfo(settings, item.projectId, item.iid);
+          if (rInfo.state) item.reviewerState = rInfo.state;
           // Drop only on a confirmed absence — a failed /reviewers call must not evict cards.
           if (!fromList && !item.viaGroup && rInfo.ok && !rInfo.found) {
             return { type: 'unassigned', item };
@@ -410,7 +422,8 @@ export async function sync() {
 
     const hiddenCleanupSafe = !settings.userId || approverListOk;
     if (hiddenCleanupSafe) {
-      hidden = hidden.filter((i) => assignedKeys.has(i.key));
+      // A key whose per-MR approvals check failed this cycle is unproven, not gone.
+      hidden = hidden.filter((i) => assignedKeys.has(i.key) || unverifiedGroupKeys.has(i.key));
     }
 
     step = 'fetch label colors';

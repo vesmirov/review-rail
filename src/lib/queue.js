@@ -98,7 +98,10 @@ export function hideItem(state, key, now = Date.now()) {
   if (fromQueue) {
     return {
       queue: queue.filter((i) => i.key !== key),
-      hidden: [...hidden, { ...fromQueue, hiddenAt: now, hiddenState: 'unreviewed' }],
+      hidden: [
+        ...hidden,
+        { ...fromQueue, hiddenAt: now, hiddenState: fromQueue.reviewerState || 'unreviewed' },
+      ],
       waiting,
     };
   }
