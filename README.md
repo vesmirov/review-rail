@@ -22,6 +22,20 @@ stays in your browser — a read-only token, no backend, no telemetry.
 
 ![Review Rail — queue](docs/store-assets/screenshot-queue.png)
 
+## Who it's for
+
+Review Rail pays off when reviewing is a stream, not an errand:
+
+- you review for several projects at once, with ten or more MRs in flight;
+- your GitLab is self-hosted on 16.x or 17.x, where the new merge request
+  homepage doesn't exist yet and upgrades take quarters;
+- you want a fixed ritual: open the popup, see the one MR to review next,
+  open it, done.
+
+If you are on gitlab.com 18.x with a couple of reviews a week, the
+built-in merge request homepage (Shift+M) may be all you need, and that
+is fine. Review Rail is for the queue that never quite empties.
+
 ## Features
 
 - **Ordered queue, not a list** — merge requests where you are a reviewer
