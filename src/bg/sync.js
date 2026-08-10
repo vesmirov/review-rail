@@ -34,6 +34,8 @@ const POOL_LIMIT = 5;
 
 const LABEL_COLORS_TTL = 864e5;
 
+const REVOKED_TTL = 180 * 864e5;
+
 let syncRunning = false;
 let pendingActions = [];
 
@@ -93,7 +95,10 @@ async function resolveProjectPaths(settings, projectIds) {
 async function importApprovalHistory(settings, maxPages) {
   const events = await fetchApprovalEvents(settings, maxPages);
   const paths = await resolveProjectPaths(settings, [...new Set(events.map((e) => e.project_id))]);
-  const entries = events.map((e) => approvalEventToEntry(e, paths, settings.baseUrl));
+  const { revokedApprovals = {} } = await chrome.storage.local.get('revokedApprovals');
+  const entries = events
+    .map((e) => approvalEventToEntry(e, paths, settings.baseUrl))
+    .filter((e) => e && !(revokedApprovals[e.key] && e.completedAt <= revokedApprovals[e.key]));
   const { history } = await getState();
   await chrome.storage.local.set({
     history: reconcileApprovals(history, entries, HISTORY_LIMIT),
@@ -212,9 +217,10 @@ export async function sync() {
             .then((a) =>
               ((a && a.approved_by) || []).some((x) => x.user && x.user.id === settings.userId)
             )
-            .catch(() => false)
+            .catch(() => null)
         );
-        groupExtras = groupExtras.filter((_, i) => !approvedChecks[i]);
+        // null = check failed; skip the MR this cycle rather than guess either way.
+        groupExtras = groupExtras.filter((_, i) => approvedChecks[i] === false);
       }
     }
     const groupKeys = new Set(groupExtras.map((mr) => mrKey(mr.project_id, mr.iid)));
@@ -233,6 +239,7 @@ export async function sync() {
     );
 
     let added = 0;
+    const revokedKeys = [];
     for (const mr of allIncoming) {
       const key = mrKey(mr.project_id, mr.iid);
       const inQueue = queueKeys.has(key);
@@ -258,7 +265,21 @@ export async function sync() {
         });
         hiddenKeys.add(key);
       }
-      if (shouldAutoAdd({ inQueue, inHistory, reviewerState, isSnoozed: hiddenKeys.has(key) })) {
+      if (
+        shouldAutoAdd({
+          inQueue,
+          inHistory,
+          reviewerState,
+          isSnoozed: hiddenKeys.has(key),
+          viaGroup: groupKeys.has(key),
+        })
+      ) {
+        if (inHistory && reviewerState !== 'unreviewed') {
+          revokedKeys.push(key);
+          for (let i = history.length - 1; i >= 0; i--) {
+            if (history[i].key === key && history[i].how === 'approved') history.splice(i, 1);
+          }
+        }
         const queueItem = queueItemFromMr(mr, {
           projectPath: projectPathFromUrl(mr.web_url),
           asapLabel: settings.asapLabel,
@@ -273,6 +294,17 @@ export async function sync() {
       } else if (!inQueue && !hiddenKeys.has(key) && waitingState(reviewerState)) {
         waiting.push(waitingEntry(mr, reviewerState));
       }
+    }
+    if (revokedKeys.length) {
+      // Remembered so the events backfill doesn't resurrect withdrawn approvals:
+      // GitLab keeps the "approved" event after a revoke.
+      const { revokedApprovals = {} } = await chrome.storage.local.get('revokedApprovals');
+      const now = Date.now();
+      for (const k of revokedKeys) revokedApprovals[k] = now;
+      for (const [k, ts] of Object.entries(revokedApprovals)) {
+        if (now - ts > REVOKED_TTL) delete revokedApprovals[k];
+      }
+      await chrome.storage.local.set({ revokedApprovals });
     }
 
     step = 'check queue items';
