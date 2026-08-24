@@ -318,7 +318,7 @@ export async function sync() {
     }
 
     step = 'check queue items';
-    // 'none' = poll succeeded, nothing to show; null/undefined = unknown, re-poll.
+    // 'none' = poll succeeded, nothing to show; null/undefined = never fetched.
     const refreshPipeline = async (item, mr) => {
       try {
         if (mr && 'head_pipeline' in mr) {
@@ -352,7 +352,10 @@ export async function sync() {
         // Reviewer verdicts don't bump updated_at (verified against gitlab.com).
         const unchanged = fromList && item.updatedAt && fromList.updated_at === item.updatedAt;
         if (unchanged) {
-          if (item.pipeline === 'running' || item.pipeline == null) await refreshPipeline(item, null);
+          // Pipeline events don't bump updated_at either, and terminal statuses
+          // can flip without one (a retry turns failed into passed, a manual
+          // job turns passed into failed), so every item is re-polled.
+          await refreshPipeline(item, null);
           const rState = (await myReviewerInfo(settings, item.projectId, item.iid)).state;
           if (rState) item.reviewerState = rState;
           const verdict = reviewerVerdict(rState);

@@ -4,6 +4,19 @@ All notable changes to Review Rail are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions match
 Chrome Web Store releases.
 
+## 0.2.3 - 2026-08-24
+
+### Fixed
+
+- Revoking an approval now returns the card to the queue and withdraws the
+  counted review credit. Only the latest credit is withdrawn; earlier review
+  rounds stay in history and stats.
+- Hiding a card whose approval was revoked now sticks instead of the card
+  reappearing on every sync.
+- The pipeline badge no longer goes stale: status is re-checked on every
+  sync, so a retried pipeline that passed - or a manual job that failed -
+  shows up without waiting for other MR activity.
+
 ## 0.2.2 - 2026-08-05
 
 ### Fixed
