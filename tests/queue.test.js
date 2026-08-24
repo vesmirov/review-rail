@@ -256,6 +256,13 @@ test('hideItem: moves an MR from the queue to hidden with a timestamp and its st
   assert.equal(hidden[0].hiddenState, 'unreviewed');
 });
 
+test('hideItem: records the queue card reviewer state so a revoked-approval card stays hidden', () => {
+  const state = { queue: [{ key: 'k', reviewerState: 'unapproved' }], hidden: [], waiting: [] };
+  const next = hideItem(state, 'k', 111);
+  assert.equal(next.hidden[0].hiddenState, 'unapproved');
+  assert.equal(shouldUnhide('unapproved', next.hidden[0].hiddenState), false);
+});
+
 test('hideItem: hides a card from the waiting section, remembering its state', () => {
   const state = {
     queue: [],
