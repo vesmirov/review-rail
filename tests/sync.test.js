@@ -163,15 +163,33 @@ test('card with unknown pipeline (null) is re-polled on the fast path and repair
   assert.equal(store.queue[0].pipeline, 'failed');
 });
 
-test('empty /pipelines response yields a none marker and is not re-polled again', async () => {
+test('stale failed: a retry that passed is picked up even when updated_at is unchanged', async () => {
+  store.queue = [queueItem({ pipeline: 'failed', updatedAt: openMr.updated_at })];
+  routes.assigned = ok([openMr]); // updated_at unchanged -> fast path
+  routes.reviewers = ok([{ user: { id: 7 }, state: 'unreviewed', created_at: null }]);
+  routes.pipelines = ok([{ status: 'success' }]);
+  await sync();
+  assert.equal(store.queue[0].pipeline, 'passed');
+});
+
+test('stale passed: a manual job failing later is picked up even when updated_at is unchanged', async () => {
+  store.queue = [queueItem({ pipeline: 'passed', updatedAt: openMr.updated_at })];
+  routes.assigned = ok([openMr]);
+  routes.reviewers = ok([{ user: { id: 7 }, state: 'unreviewed', created_at: null }]);
+  routes.pipelines = ok([{ status: 'failed' }]);
+  await sync();
+  assert.equal(store.queue[0].pipeline, 'failed');
+});
+
+test('empty /pipelines response yields a none marker and a late first pipeline is still noticed', async () => {
   store.queue = [queueItem({ pipeline: null, updatedAt: openMr.updated_at })];
   routes.assigned = ok([openMr]);
   routes.reviewers = ok([{ user: { id: 7 }, state: 'unreviewed', created_at: null }]);
   await sync();
   assert.equal(store.queue[0].pipeline, 'none');
-  const after = calls.pipelines;
+  routes.pipelines = ok([{ status: 'running' }]);
   await sync();
-  assert.equal(calls.pipelines, after); // second sync did not fetch pipelines
+  assert.equal(store.queue[0].pipeline, 'running');
 });
 
 test('revoked approval: card returns to the queue, credit is removed from history', async () => {
