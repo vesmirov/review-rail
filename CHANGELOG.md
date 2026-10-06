@@ -10,6 +10,8 @@ Chrome Web Store releases.
 
 - The toolbar badge uses the popup's accent blue with white text instead
   of a leftover indigo from an earlier palette.
+- The toolbar icon stays readable on light browser themes: the rails now
+  have a thin dark outline.
 
 ## 0.2.3 - 2026-08-24
 
