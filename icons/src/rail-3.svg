@@ -1,4 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="-1.25 -1.25 34.5 34.5">
+  <!-- outline: every shape again in dark, 1.25 units wider on each side -->
+  <polygon points="0.55,25.02 31.45,25.02 29.03,19.69 2.97,19.69" fill="#1E1F22" stroke="#1E1F22" stroke-width="3.57" stroke-linejoin="round"/>
+  <polygon points="4.71,15.89 27.30,15.89 25.58,12.08 6.43,12.08" fill="#1E1F22" stroke="#1E1F22" stroke-width="3.34" stroke-linejoin="round"/>
+  <polygon points="7.78,9.11 24.22,9.11 22.99,6.37 9.01,6.37" fill="#1E1F22" stroke="#1E1F22" stroke-width="3.18" stroke-linejoin="round"/>
+  <polygon points="2.15,27.53 5.50,27.53 12.12,4.47 10.90,4.47" fill="#1E1F22" stroke="#1E1F22" stroke-width="3.57" stroke-linejoin="round"/>
+  <polygon points="29.85,27.53 26.50,27.53 19.88,4.47 21.10,4.47" fill="#1E1F22" stroke="#1E1F22" stroke-width="3.57" stroke-linejoin="round"/>
+  <!-- rails and sleepers -->
   <polygon points="0.55,25.02 31.45,25.02 29.03,19.69 2.97,19.69" fill="#E8A44A" stroke="#E8A44A" stroke-width="1.07" stroke-linejoin="round"/>
   <polygon points="4.71,15.89 27.30,15.89 25.58,12.08 6.43,12.08" fill="#C6C9CF" stroke="#C6C9CF" stroke-width="0.84" stroke-linejoin="round"/>
   <polygon points="7.78,9.11 24.22,9.11 22.99,6.37 9.01,6.37" fill="#8A8E95" stroke="#8A8E95" stroke-width="0.68" stroke-linejoin="round"/>

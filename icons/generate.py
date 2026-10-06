@@ -2,8 +2,9 @@
 
 The icon is a railroad track in one-point perspective with no backdrop:
 sleepers are the review queue, the nearest (widest, amber) sleeper is
-"up next". 128/64/48/32 px use the 3-sleeper master, 24/16 px use the
-simplified 2-sleeper version.
+"up next". A thin dark outline traces every shape so the light rails stay
+readable on light toolbars. 128/64/48/32 px use the 3-sleeper master,
+24/16 px use the simplified 2-sleeper version.
 
 Rendering is done with headless Chrome on a transparent background.
 Usage: python3 icons/generate.py
