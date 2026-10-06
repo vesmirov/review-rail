@@ -24,7 +24,11 @@ export async function getState() {
 
 export async function updateBadge() {
   const { queue } = await getState();
-  await chrome.action.setBadgeBackgroundColor({ color: '#4F46E5' });
+  await chrome.action.setBadgeBackgroundColor({ color: '#3574F0' });
+  // setBadgeTextColor exists since Chrome 110; older versions keep the default.
+  if (chrome.action.setBadgeTextColor) {
+    await chrome.action.setBadgeTextColor({ color: '#FFFFFF' });
+  }
   await chrome.action.setBadgeText({ text: queue.length ? String(queue.length) : '' });
 }
 
