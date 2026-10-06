@@ -16,6 +16,7 @@ import {
 import { approvalEventToEntry, reconcileApprovals } from '../lib/history.js';
 import { getState, updateBadge, logInfo, logError, enqueueWrite, HISTORY_LIMIT } from './store.js';
 import { tapi, tapiAll } from './api.js';
+import { notifyNewReviews } from './notify.js';
 
 async function pool(items, limit, fn) {
   const results = new Array(items.length);
@@ -242,7 +243,8 @@ export async function sync() {
       ])
     );
 
-    let added = 0;
+    const addedKeys = new Set();
+    const reReviewKeys = new Set();
     const revokedKeys = [];
     for (const mr of allIncoming) {
       const key = mrKey(mr.project_id, mr.iid);
@@ -300,7 +302,8 @@ export async function sync() {
         if (reviewerState) queueItem.reviewerState = reviewerState;
         queue.push(queueItem);
         queueKeys.add(key);
-        added++;
+        addedKeys.add(key);
+        if (inHistory) reReviewKeys.add(key);
       } else if (!inQueue && !hiddenKeys.has(key) && waitingState(reviewerState)) {
         waiting.push(waitingEntry(mr, reviewerState));
       }
@@ -454,16 +457,24 @@ export async function sync() {
 
     await updateBadge();
 
+    // The first sync after connecting fills the queue from scratch: not news.
+    if (state.lastSync) {
+      const fresh = reconciled.queue
+        .filter((i) => addedKeys.has(i.key))
+        .map((i) => ({ ...i, reReview: reReviewKeys.has(i.key) }));
+      await notifyNewReviews(fresh, settings);
+    }
+
     const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
     const parts = [
       `queue: ${reconciled.queue.length}`,
       `awaiting author: ${reconciled.waiting.length}`,
     ];
-    if (added) parts.push(`${added} added`);
+    if (addedKeys.size) parts.push(`${addedKeys.size} added`);
     if (completed) parts.push(`${completed} completed`);
     if (removed) parts.push(`${removed} gone (404)`);
     if (unassigned) parts.push(`${unassigned} unassigned`);
-    if (!added && !completed && !removed && !unassigned) parts.push('no changes');
+    if (!addedKeys.size && !completed && !removed && !unassigned) parts.push('no changes');
     logInfo('sync', `Synced in ${seconds} s · ${parts.join(' · ')}`);
 
     return { ok: true };

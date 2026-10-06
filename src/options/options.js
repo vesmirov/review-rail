@@ -142,7 +142,34 @@ $('save').addEventListener('click', async () => {
   }
 });
 
+// Notifications are on exactly while the optional permission is granted.
+const NOTIFY_PERMISSION = { permissions: ['notifications'] };
+
+async function loadNotify() {
+  if (!hasChrome || !chrome.permissions) return;
+  $('notify').checked = await chrome.permissions.contains(NOTIFY_PERMISSION);
+}
+
+$('notify').addEventListener('change', async (e) => {
+  if (!hasChrome) return;
+  try {
+    if (e.target.checked) {
+      e.target.checked = await chrome.permissions.request(NOTIFY_PERMISSION);
+    } else {
+      await chrome.permissions.remove(NOTIFY_PERMISSION);
+    }
+  } catch {
+    await loadNotify();
+  }
+});
+
+if (hasChrome && chrome.permissions) {
+  chrome.permissions.onAdded.addListener(loadNotify);
+  chrome.permissions.onRemoved.addListener(loadNotify);
+}
+
 load();
+loadNotify();
 updateTokenLink();
 
 const aboutVersion = document.getElementById('about-version');

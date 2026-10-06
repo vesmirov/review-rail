@@ -6,6 +6,15 @@ Chrome Web Store releases.
 
 ## Unreleased
 
+### Added
+
+- Optional system notifications when a merge request enters your queue,
+  including reviews requested again. Several at once arrive as one
+  notification; a click opens the merge request (or your GitLab review
+  list). Turn them on in the settings.
+- New optional permission: `notifications`. Chrome asks for it only when
+  you turn notifications on; nothing changes for you otherwise.
+
 ### Fixed
 
 - The toolbar badge uses the popup's accent blue with white text instead
