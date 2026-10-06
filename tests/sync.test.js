@@ -20,10 +20,12 @@ globalThis.chrome = {
     },
   },
   action: {
-    setBadgeBackgroundColor: async () => {},
-    setBadgeText: async () => {},
+    setBadgeBackgroundColor: async ({ color }) => (badge.background = color),
+    setBadgeTextColor: async ({ color }) => (badge.textColor = color),
+    setBadgeText: async ({ text }) => (badge.text = text),
   },
 };
+let badge = {};
 
 // ---------- fetch stub ----------
 const ok = (data) => ({ ok: true, status: 200, json: async () => data });
@@ -51,6 +53,7 @@ globalThis.fetch = async (url) => {
 };
 
 const { sync } = await import('../src/bg/sync.js');
+const { updateBadge } = await import('../src/bg/store.js');
 
 const openMr = {
   project_id: 1,
@@ -108,6 +111,7 @@ beforeEach(() => {
     events: ok([]),
   };
   calls = { pipelines: 0 };
+  badge = {};
 });
 
 const approvedEntry = () => ({
@@ -298,4 +302,24 @@ test('a "request changes" verdict is caught even when updated_at is unchanged (d
   assert.equal(store.waiting[0].state, 'requested_changes');
   assert.equal(store.history.length, 1);
   assert.equal(store.history[0].how, 'changes_requested');
+});
+
+test('the toolbar badge uses the accent blue with white text, not the old indigo', async () => {
+  await updateBadge();
+  assert.equal(badge.background, '#3574F0');
+  assert.equal(badge.textColor, '#FFFFFF');
+  assert.equal(badge.text, '1');
+});
+
+test('the badge still updates on Chrome without setBadgeTextColor (before 110)', async () => {
+  const { setBadgeTextColor } = chrome.action;
+  delete chrome.action.setBadgeTextColor;
+  try {
+    await updateBadge();
+  } finally {
+    chrome.action.setBadgeTextColor = setBadgeTextColor;
+  }
+  assert.equal(badge.background, '#3574F0');
+  assert.equal(badge.textColor, undefined);
+  assert.equal(badge.text, '1');
 });

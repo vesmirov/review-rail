@@ -4,6 +4,13 @@ All notable changes to Review Rail are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions match
 Chrome Web Store releases.
 
+## Unreleased
+
+### Fixed
+
+- The toolbar badge uses the popup's accent blue with white text instead
+  of a leftover indigo from an earlier palette.
+
 ## 0.2.3 - 2026-08-24
 
 ### Fixed
