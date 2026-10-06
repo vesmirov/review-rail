@@ -3,12 +3,23 @@ import { reorderWithin, hideItem, restoreItem } from './lib/queue.js';
 import { getState, updateBadge, logInfo, enqueueWrite, clearLogs } from './bg/store.js';
 import { tapi } from './bg/api.js';
 import { sync, recordPendingAction } from './bg/sync.js';
+import { openFromNotification } from './bg/notify.js';
 
 const SYNC_ALARM = 'rq-sync';
 const SYNC_MINUTES = 5;
 
 chrome.runtime.onInstalled.addListener(init);
 chrome.runtime.onStartup.addListener(init);
+
+// chrome.notifications exists only while its optional permission is granted,
+// so the click listener is (re)attached when the permission arrives.
+function listenForNotificationClicks() {
+  if (chrome.notifications && !chrome.notifications.onClicked.hasListener(openFromNotification)) {
+    chrome.notifications.onClicked.addListener(openFromNotification);
+  }
+}
+listenForNotificationClicks();
+chrome.permissions.onAdded.addListener(listenForNotificationClicks);
 
 chrome.alarms.get(SYNC_ALARM).then((alarm) => {
   if (!alarm) chrome.alarms.create(SYNC_ALARM, { periodInMinutes: SYNC_MINUTES });

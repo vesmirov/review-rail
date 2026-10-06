@@ -55,6 +55,9 @@ is fine. Review Rail is for the queue that never quite empties.
   collapsed Hidden list. The MR comes back when its state changes.
 - **GitLab-native cards** — labels in their GitLab colors, project,
   author, age.
+- **Notifications (optional)**: a system notification when a merge
+  request enters your queue, including reviews requested again. Several at
+  once arrive as one notification; a click opens the MR.
 - **Diagnostic logs** — a local ring buffer with readable errors and
   hints, available from the popup footer.
 
@@ -69,6 +72,7 @@ host — the GitLab server you configure — and to nothing else. See
 | `storage` | queue state, settings, and stats live in your browser |
 | `alarms` | background polling every 5 minutes |
 | host access (optional, single host) | requested at setup for the one GitLab URL you enter |
+| `notifications` (optional) | requested only when you turn notifications on in the settings |
 
 The access token requires the single scope **`read_api`**. The extension
 is read-only by design: it cannot approve, comment, merge, or change
@@ -105,6 +109,7 @@ GitLab 16.9+.
    and paste it. The token is stored only in `chrome.storage.local`, is
    never displayed after saving, and is sent only to your GitLab host.
 4. Optionally set the urgency label (default `asap`).
+5. Optionally turn on notifications for merge requests entering your queue.
 
 ## What it deliberately doesn't do
 

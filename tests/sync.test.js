@@ -24,8 +24,19 @@ globalThis.chrome = {
     setBadgeTextColor: async ({ color }) => (badge.textColor = color),
     setBadgeText: async ({ text }) => (badge.text = text),
   },
+  permissions: {
+    contains: async () => notifyGranted,
+  },
+  notifications: {
+    create: async (id, options) => notified.push({ id, ...options }),
+  },
+  runtime: {
+    getURL: (path) => `chrome-extension://rr/${path}`,
+  },
 };
 let badge = {};
+let notifyGranted = true;
+let notified = [];
 
 // ---------- fetch stub ----------
 const ok = (data) => ({ ok: true, status: 200, json: async () => data });
@@ -112,6 +123,8 @@ beforeEach(() => {
   };
   calls = { pipelines: 0 };
   badge = {};
+  notifyGranted = true;
+  notified = [];
 });
 
 const approvedEntry = () => ({
@@ -322,4 +335,75 @@ test('the badge still updates on Chrome without setBadgeTextColor (before 110)',
   assert.equal(badge.background, '#3574F0');
   assert.equal(badge.textColor, undefined);
   assert.equal(badge.text, '1');
+});
+
+const newMr = (iid, extra = {}) => ({
+  ...openMr,
+  iid,
+  title: `MR ${iid}`,
+  web_url: `https://gl.test/g/p/-/merge_requests/${iid}`,
+  ...extra,
+});
+const stillReviewing = () => ok([{ user: { id: 7 }, state: 'unreviewed', created_at: null }]);
+
+test('a new MR entering the queue raises a notification that links to it', async () => {
+  store.lastSync = Date.now() - 300000;
+  routes.assigned = ok([openMr, newMr(6)]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(notified.length, 1);
+  assert.equal(notified[0].id, 'rr:https://gl.test/g/p/-/merge_requests/6');
+  assert.equal(notified[0].title, 'Review requested');
+  assert.equal(notified[0].message, 'MR 6');
+});
+
+test('several new MRs in one sync are grouped into a single notification', async () => {
+  store.lastSync = Date.now() - 300000;
+  routes.assigned = ok([openMr, newMr(6), newMr(7)]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(notified.length, 1);
+  assert.equal(notified[0].title, '2 new reviews');
+  assert.equal(notified[0].id, 'rr:https://gl.test/dashboard/merge_requests?reviewer_username=me');
+});
+
+test('the first sync after connecting fills the queue silently', async () => {
+  store.lastSync = null;
+  store.queue = [];
+  routes.assigned = ok([newMr(6), newMr(7)]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(store.queue.length, 2);
+  assert.equal(notified.length, 0);
+});
+
+test('no notification without the notifications permission', async () => {
+  store.lastSync = Date.now() - 300000;
+  notifyGranted = false;
+  routes.assigned = ok([openMr, newMr(6)]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(store.queue.length, 2);
+  assert.equal(notified.length, 0);
+});
+
+test('a sync with nothing new stays quiet', async () => {
+  store.lastSync = Date.now() - 300000;
+  routes.assigned = ok([openMr]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(store.queue.length, 1);
+  assert.equal(notified.length, 0);
+});
+
+test('an MR back for another review round is announced as "again"', async () => {
+  store.lastSync = Date.now() - 300000;
+  store.queue = [];
+  store.history = [approvedEntry()];
+  routes.assigned = ok([openMr]);
+  routes.reviewers = stillReviewing();
+  await sync();
+  assert.equal(store.queue.length, 1);
+  assert.equal(notified.length, 1);
+  assert.equal(notified[0].title, 'Review requested again');
 });

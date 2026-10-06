@@ -13,6 +13,7 @@ tracking your own merge requests waiting on others is on the list below.
 - Honest review counting from real GitLab actions only, with stats and a
   16-week activity grid
 - Hide/restore with state tracking
+- Optional system notifications when a merge request enters your queue
 - Pipeline status on cards — one icon: passed, failed, or running
 - Group-approval MRs — merge requests where you are an eligible approver
   via a group rule are picked up and marked; silent on instances without
@@ -24,20 +25,18 @@ tracking your own merge requests waiting on others is on the list below.
 
 Rough order. Subject to change.
 
-1. **Notifications**: new MRs entering your queue
-   ([#6](https://github.com/vesmirov/review-rail/issues/6)); status
-   changes on your own MRs (approved, changes requested, commented,
-   merged, failed pipeline).
-2. **Your own MRs**: track their review status in the extension
+1. **Your own MRs**: track their review status in the extension, with
+   optional notifications on status changes (approved, changes requested,
+   commented, merged, failed pipeline)
    ([#7](https://github.com/vesmirov/review-rail/issues/7)).
-3. **Working-hours age**: card age and staleness counted within your
+2. **Working-hours age**: card age and staleness counted within your
    working hours, so Monday morning doesn't look like everything is on fire.
-4. **Time to first response**: a personal metric for how long MRs wait
+3. **Time to first response**: a personal metric for how long MRs wait
    for your first reaction, counted in working hours.
-5. **GitHub support** (post-1.0): same queue, same rules, pull requests.
+4. **GitHub support** (post-1.0): same queue, same rules, pull requests.
    Not before the GitLab core has proven itself
    ([#14](https://github.com/vesmirov/review-rail/issues/14)).
-6. **Gamification**: milestones on top of the existing honest stats
+5. **Gamification**: milestones on top of the existing honest stats
    ([#13](https://github.com/vesmirov/review-rail/issues/13)), and an
    opt-in peer leaderboard
    ([#12](https://github.com/vesmirov/review-rail/issues/12)): top

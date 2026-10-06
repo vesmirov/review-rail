@@ -1,6 +1,6 @@
 # Privacy Policy — Review Rail
 
-Last updated: July 31, 2026
+Last updated: October 7, 2026
 
 Review Rail is a browser extension that maintains a personal code-review
 queue for GitLab.
@@ -15,6 +15,10 @@ queue for GitLab.
 - **Merge request metadata** (titles, authors, labels, timestamps, review
   states) and **your review history** — fetched from your GitLab server and
   stored locally in your browser to render the queue and statistics.
+- **Notifications** (only if you turn them on) - a new merge request's
+  title, project, and author are shown in your operating system's
+  notifications. The operating system may keep them in its notification
+  history; that history is managed by the OS, not by the extension.
 - **Diagnostic logs** — kept locally (last 300 entries). They contain API
   endpoint paths (with numeric project and MR ids), HTTP statuses, GitLab
   error messages, and the GitLab host you configured; never your token,
