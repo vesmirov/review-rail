@@ -16,28 +16,33 @@ tracking your own merge requests waiting on others is on the list below.
 - Pipeline status on cards — one icon: passed, failed, or running
 - Group-approval MRs — merge requests where you are an eligible approver
   via a group rule are picked up and marked; silent on instances without
-  approval rules (beta)
+  approval rules (beta,
+  [#11](https://github.com/vesmirov/review-rail/issues/11))
 - GitLab: gitlab.com and self-hosted, read-only token (`read_api`)
 
 ## Next
 
 Rough order. Subject to change.
 
-1. **Working-hours age** — card age and staleness counted within your
+1. **Notifications**: new MRs entering your queue
+   ([#6](https://github.com/vesmirov/review-rail/issues/6)); status
+   changes on your own MRs (approved, changes requested, commented,
+   merged, failed pipeline).
+2. **Your own MRs**: track their review status in the extension
+   ([#7](https://github.com/vesmirov/review-rail/issues/7)).
+3. **Working-hours age**: card age and staleness counted within your
    working hours, so Monday morning doesn't look like everything is on fire.
-2. **Review WIP limit**: "no more than N reviews in flight". Extra cards
-   collapse until you finish one; changes behavior, not just the view.
-3. **Time to first response**: a personal metric for how long MRs wait
+4. **Time to first response**: a personal metric for how long MRs wait
    for your first reaction, counted in working hours.
-4. **Notifications** — new MRs entering your queue; status changes on
-   your own MRs (approved, changes requested, commented, merged, failed
-   pipeline).
-5. **Your own MRs** — track their review status in the extension.
-6. **GitHub support** (post-1.0) — same queue, same rules, pull requests.
-   Not before the GitLab core has proven itself.
-7. **Gamification**: milestones on top of the existing honest stats, and
-   an opt-in peer leaderboard (top reviewers per day / week / month among
-   colleagues you pick). No daily streaks: they reward showing up, not
+5. **GitHub support** (post-1.0): same queue, same rules, pull requests.
+   Not before the GitLab core has proven itself
+   ([#14](https://github.com/vesmirov/review-rail/issues/14)).
+6. **Gamification**: milestones on top of the existing honest stats
+   ([#13](https://github.com/vesmirov/review-rail/issues/13)), and an
+   opt-in peer leaderboard
+   ([#12](https://github.com/vesmirov/review-rail/issues/12)): top
+   reviewers per day / week / month among colleagues you pick. No daily
+   streaks: they reward showing up, not
    reviewing well. Leaderboards count only GitLab-verifiable actions
    (approvals read from each user's own events feed) because a fair
    competition needs numbers anyone can reproduce. The local activity
